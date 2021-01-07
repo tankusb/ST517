@@ -1,0 +1,117 @@
+---
+title: "ST517-HW1"
+author: Ben Tankus
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1. Are basketball, baseball, and soccer players the same height on average? Suppose we take a random sample of 50 players from each of the three sports. Load the sample data |sport_heights.csv| provided with the homework file.
+
+```{r}
+sportHeights <- read.csv(file = 'sport_heights.csv')
+```
+
+
+   Now you will perform an Analysis of Variance F-test step by step.  The code in the second lecture this week will be helpful.
+
+   (a) State the null and alternative hypothesis, in statistical notation, for testing whether players from the three sports have the same mean height.
+$$H_0: \mu_{baseball} = \mu_{basketball} = \mu_{soccer}$$
+$$H_A: \mu_{baseball} \neq \mu_{basketball} \neq \mu_{soccer}$$
+
+   (b) Add columns to |heights| for the overall average height and the average height for the sport of each player.
+
+```{r 1(b)}
+   # This is an R comment. Add your R code below.
+#avgHeights
+sportMeans <- tapply(sportHeights$height, sportHeights$sport, mean)  
+totalMean <- mean(sportMeans)
+```
+
+   (c) Calculate the between group sum of squares and within group sum of squares and their corresponding degrees of freedom.
+
+```{r 1(c)}
+   # Put R code below.
+
+#Between Group SS
+betweenSS <- NULL
+
+#baseball
+betweenSS['baseball'] <- sum(sportHeights$height[sportHeights$sport == 'baseball']) * (sportMeans['baseball'] - totalMean)^2
+
+#Basketball
+betweenSS['basketball'] <- sum(sportHeights$height[sportHeights$sport == 'basketball']) * (sportMeans['basketball'] - totalMean)^2
+
+#soccer
+betweenSS['soccer'] <- sum(sportHeights$height[sportHeights$sport == 'soccer']) * (sportMeans['soccer'] - totalMean)^2
+
+
+dfBetweenSS <- length(sportHeights$player[sportHeights$sport == 'baseball'])-1
+betweenSS <- sum(betweenSS)
+
+
+
+
+
+#WITHIN GROUP SS
+
+withinSS <- NULL
+withinSS['baseball'] <- sum((sportHeights$height[sportHeights$sport == 'baseball'] - sportMeans['baseball']) ^2)
+
+#Basketball
+withinSS['basketball'] <- sum((sportHeights$height[sportHeights$sport == 'basketball'] - sportMeans['basketball'])^2)
+
+#soccer
+withinSS['soccer'] <- sum((sportHeights$height[sportHeights$sport == 'soccer'] - sportMeans['soccer'] )^2)
+
+withinSS <- sum(withinSS)
+dfWithinSS <- 2
+
+```
+
+   (d) Calculate the F-statistic, and give a p-value.
+
+   ```{r 1(d)}
+   # Put R code below.
+
+   ```
+
+   (e) Now use |oneway.test()| to verify your answer. Use |var.equal = TRUE| and you should get the same answer.
+
+   ```{r 1(e)}
+   # Put R code below.
+
+   ```
+
+   (f) In two sentences or less, what do you conclude?
+
+   (g) Create a column of the residuals in |heights| by subtracting the average height from the sport of each player (i.e. the second column you created in (b)) from the |height| column. Create side-by-side box-plots of these residuals. Do you think the equal variance assumption is violated?
+
+   ```{r 1(g)}
+   # Put R code below.
+
+   ```
+   
+   (h) Use |oneway.test()| again, this time with |var.equal = FALSE|. Give the F-statistic, p-value, and denominator degrees of freedom. Does the test indicate a different conclusion?
+
+   ```{r 1(h)}
+   # Put R code below.
+
+   ```
+   
+
+   (i) In actuality, the data is generated from distributions with slightly different means, and non-constant variances. In two sentences or less, comment on what the difference in conclusions from the two tests.  Does this tell us anything about the robustness of the F-test to non-constant spreads?
+
+   (j) Food for thought: how would you perform a simulation to evaluate the robustness of the F-test to violation of the equal variance assumption? (You do not need to do this for the homework!)
+
+2. Using the data from the lab (|case0501| in the |Sleuth3| package), answer the question "Are there differences between the diets in their effect on lifetime?"
+
+   Make sure you clearly state your hypotheses, summarise your calculations, comment on the validity of the assumptions and include a short summary of your results in non-technical language.
+
+3. The following plot represents three trials of an experiment in which there are three treatments and five responses in each treatment.  Without doing any calculations, order the trials in increasing order of F-statistic. Explain your reasoning.
+
+
+4. When calculating the denominator of the F-statistic, a.k.a. the pooled variance, why do we not simply average the group-level sample variances?
+
