@@ -127,6 +127,8 @@ Then we perform the computations to find the overall mean (stored as `case0501$o
 ```{r}
 case0501$overall_mean <- with(case0501, mean(Lifetime))
 case0501$group_mean <- with(case0501, ave(Lifetime, Diet))
+
+(case0501)
 ```
 
 Using the overall mean and the group mean, we can then compute the within-group sum-of-squares (`within_group_SS`) and the between-groups sum-of-squares (`between_group_SS`).

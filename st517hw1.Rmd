@@ -28,6 +28,12 @@ $$H_A: \mu_{baseball} \neq \mu_{basketball} \neq \mu_{soccer}$$
 #avgHeights
 sportMeans <- tapply(sportHeights$height, sportHeights$sport, mean)  
 totalMean <- mean(sportMeans)
+
+sportHeights$overall_mean <- with(sportHeights, mean(height))
+sportHeights$group_mean <- with(sportHeights, ave(height,sport))
+
+
+(sportHeights)
 ```
 
    (c) Calculate the between group sum of squares and within group sum of squares and their corresponding degrees of freedom.
@@ -35,76 +41,76 @@ totalMean <- mean(sportMeans)
 ```{r 1(c)}
    # Put R code below.
 
-#Between Group SS
-betweenSS <- NULL
+betweenSS <- with(sportHeights, sum((group_mean - overall_mean)^2))
 
-#baseball
-betweenSS['baseball'] <- sum(sportHeights$height[sportHeights$sport == 'baseball']) * (sportMeans['baseball'] - totalMean)^2
+withinSS <- with(sportHeights, sum((height - group_mean)^2))
 
-#Basketball
-betweenSS['basketball'] <- sum(sportHeights$height[sportHeights$sport == 'basketball']) * (sportMeans['basketball'] - totalMean)^2
-
-#soccer
-betweenSS['soccer'] <- sum(sportHeights$height[sportHeights$sport == 'soccer']) * (sportMeans['soccer'] - totalMean)^2
-
-
-dfBetweenSS <- length(sportHeights$player[sportHeights$sport == 'baseball'])-1
-betweenSS <- sum(betweenSS)
-
-
-
-
-
-#WITHIN GROUP SS
-
-withinSS <- NULL
-withinSS['baseball'] <- sum((sportHeights$height[sportHeights$sport == 'baseball'] - sportMeans['baseball']) ^2)
-
-#Basketball
-withinSS['basketball'] <- sum((sportHeights$height[sportHeights$sport == 'basketball'] - sportMeans['basketball'])^2)
-
-#soccer
-withinSS['soccer'] <- sum((sportHeights$height[sportHeights$sport == 'soccer'] - sportMeans['soccer'] )^2)
-
-withinSS <- sum(withinSS)
-dfWithinSS <- 2
+I <- length(unique(sportHeights$sport))
+N <- nrow(sportHeights)
 
 ```
 
    (d) Calculate the F-statistic, and give a p-value.
 
-   ```{r 1(d)}
+```{r 1(d)}
    # Put R code below.
 
-   ```
+f = (betweenSS / (I-1)) / (withinSS / (N-I))
+pval <- 1 - pf(f, I-1, N-1 )
+print(paste("F-stat:", f))
+print(paste("P-Value:", pval))
+
+```
 
    (e) Now use |oneway.test()| to verify your answer. Use |var.equal = TRUE| and you should get the same answer.
 
-   ```{r 1(e)}
+```{r 1(e)}
    # Put R code below.
+test <- oneway.test(height~sport, data = sportHeights, var.equal = T)
 
-   ```
+test
+
+```
 
    (f) In two sentences or less, what do you conclude?
+   
+**We do not have enough evidence to reject the null hypothesis. This means that the sports have players of similar heights.**   
+
 
    (g) Create a column of the residuals in |heights| by subtracting the average height from the sport of each player (i.e. the second column you created in (b)) from the |height| column. Create side-by-side box-plots of these residuals. Do you think the equal variance assumption is violated?
 
-   ```{r 1(g)}
+```{r 1(g)}
    # Put R code below.
 
-   ```
+sportHeights['residuals'] <- with(sportHeights, height - group_mean)
+
+boxplot(sportHeights$residuals~sportHeights$sport)
+
+```
+   ##The equal variance assumption is likely violated as the basketball variance is much greater than baseball and soccer.
+   
    
    (h) Use |oneway.test()| again, this time with |var.equal = FALSE|. Give the F-statistic, p-value, and denominator degrees of freedom. Does the test indicate a different conclusion?
 
-   ```{r 1(h)}
+```{r 1(h)}
    # Put R code below.
+oneway.test(height~sport, data = sportHeights, var.equal = F)
 
-   ```
-   
+
+
+
+```
+   ## The var.equal = False test still doesn't give convincing evidence to reject the null hypothesis, but it is very close.
 
    (i) In actuality, the data is generated from distributions with slightly different means, and non-constant variances. In two sentences or less, comment on what the difference in conclusions from the two tests.  Does this tell us anything about the robustness of the F-test to non-constant spreads?
+   
+   ## The different conclusions show that the one-way ANOVA test is mildly robust to non-constant spreads. the roughly 0.19 difference is large, but we still have a similar outcome. 
+   
 
    (j) Food for thought: how would you perform a simulation to evaluate the robustness of the F-test to violation of the equal variance assumption? (You do not need to do this for the homework!)
+   
+   ## To evaluate the robustness we could replicate this same procedure many times for a known value, and then compare it to a simulated value.
+   
 
 2. Using the data from the lab (|case0501| in the |Sleuth3| package), answer the question "Are there differences between the diets in their effect on lifetime?"
 
