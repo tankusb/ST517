@@ -6,6 +6,8 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(Sleuth3)
+library(ggplot2)
 ```
 
 1. Are basketball, baseball, and soccer players the same height on average? Suppose we take a random sample of 50 players from each of the three sports. Load the sample data |sport_heights.csv| provided with the homework file.
@@ -114,10 +116,32 @@ oneway.test(height~sport, data = sportHeights, var.equal = F)
 
 2. Using the data from the lab (|case0501| in the |Sleuth3| package), answer the question "Are there differences between the diets in their effect on lifetime?"
 
+$$H_0: \mu_{diet1} = \mu_{diet2} = \mu_{diet3} = \mu_{diet4} = \mu_{diet5} = \mu_{diet6}$$
+$$H_A: \mu_{diet1} \neq \mu_{diet2} \neq \mu_{diet3} \neq \mu_{diet4} \neq \mu_{diet5} \neq \mu_{diet6}$$
+
+```{r}
+oneway.test(Lifetime ~ Diet, data = case0501, var.equal = T)
+```
+
+```{r}
+qplot(Diet, Lifetime, data = case0501, geom = "boxplot")
+```
+
    Make sure you clearly state your hypotheses, summarise your calculations, comment on the validity of the assumptions and include a short summary of your results in non-technical language.
+   
+## with a p-value of 2.2e-16 we have strong evidence to reject the null hypothesis that the means are equal. Looking at the boxplot it looks like most distributions are close enough to normal to satisfy normallity assumption. Reading the study introduction also leads me to belive that the data are independant, and measurements are representative of the study.
 
 3. The following plot represents three trials of an experiment in which there are three treatments and five responses in each treatment.  Without doing any calculations, order the trials in increasing order of F-statistic. Explain your reasoning.
 
+## Trial 2 -> Trial 1 -> Trial 3
+
+## Sum of Squares is based off variability, either within or between samples. The simplified formula to calculate the f-statistic is a simple fraction of BetweenSS / WithinSS, meaning as variability between samples increases, the f-stat will go up, while the opposite is true with variability within samples increases.
+
+## Trial 2 has large variability within samples and small varability between samples, so that has the lowest f-stat. Trial 3 has high varability between samples, and low variability within samples, so that is the highest f-stat, and trial 1 is somewhere in-between.
+
 
 4. When calculating the denominator of the F-statistic, a.k.a. the pooled variance, why do we not simply average the group-level sample variances?
+
+## One cannot simply average the group-level variances because pooled variance is the *degrees of freedom weighted* variance. The DF weight is lost when doing a simple average.
+
 
