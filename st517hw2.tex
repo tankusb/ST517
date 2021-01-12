@@ -1,0 +1,329 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={ST517-HW1},
+  pdfauthor={Ben Tankus},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+
+\title{ST517-HW1}
+\author{Ben Tankus}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  (3 points) (Adapted from Exercise 21, Section 6.7, The Statistical
+  Sleuth, 2nd Ed.) The dataset bearings.csv contains failure times
+  (measured in millions of cycles) of engine bearings made from five
+  different compounds.
+\end{enumerate}
+
+\begin{enumerate}
+\def\labelenumi{(\alph{enumi})}
+\tightlist
+\item
+  (1 point) Read in the data. What type of data object is bearings? With
+  ggplot2, create side-by-side boxplots of the failure times by
+  compound.
+\end{enumerate}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{bearing <-}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\DataTypeTok{file =} \StringTok{'bearings.csv'}\NormalTok{)}
+\KeywordTok{print}\NormalTok{(}\KeywordTok{paste}\NormalTok{(}\StringTok{"data is stored in a"}\NormalTok{, }\KeywordTok{typeof}\NormalTok{(bearing)))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "data is stored in a list"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qplot}\NormalTok{(Compound, Time , }\DataTypeTok{data =}\NormalTok{ bearing, }\DataTypeTok{geom =} \StringTok{'boxplot'}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{st517hw2_files/figure-latex/unnamed-chunk-1-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#length(bearing$Time[bearing$Compound == 'III'])}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{enumerate}
+\def\labelenumi{(\alph{enumi})}
+\setcounter{enumi}{1}
+\tightlist
+\item
+  (2 points) Determine the pairs of engine ball bearing compounds for
+  which there is a significant difference in mean failure times. Present
+  your findings in a short statistical report (≈ 4 sentences).
+\end{enumerate}
+
+\[H_0: \mu_{I} = \mu_{II},  \mu_{I} = \mu_{III}, \mu_{I} = \mu_{IV}, \mu_{I} = \mu_{V} ... for \ all \ pairs \]
+\[H_A: \mu_{I} \neq \mu_{II},  \mu_{I} \neq \mu_{III}, \mu_{I} \neq \mu_{IV}, \mu_{I} \neq \mu_{V} ... for \ any \ pairs \]
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Equal var, false. paired = false, independant = true, outliers = true, equal N = True}
+\CommentTok{# METHOD - Use Tukey Kramer adjustment as we are doing all pairwise comparisons}
+\NormalTok{fit <-}\StringTok{ }\KeywordTok{aov}\NormalTok{(Time }\OperatorTok{~}\StringTok{ }\NormalTok{Compound, }\DataTypeTok{data =}\NormalTok{ bearing)}
+\KeywordTok{summary}\NormalTok{(fit)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##             Df Sum Sq Mean Sq F value  Pr(>F)   
+## Compound     4  401.3  100.32    5.02 0.00197 **
+## Residuals   45  899.2   19.98                   
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{TukeyHSD}\NormalTok{(fit)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   Tukey multiple comparisons of means
+##     95% family-wise confidence level
+## 
+## Fit: aov(formula = Time ~ Compound, data = bearing)
+## 
+## $Compound
+##              diff         lwr       upr     p adj
+## II-I   -4.6430001 -10.3234907  1.037490 0.1567083
+## III-I  -2.0570003  -7.7374909  3.623490 0.8406451
+## IV-I   -0.8950002  -6.5754908  4.785490 0.9914058
+## V-I     4.0129998  -1.6674907  9.693490 0.2791467
+## III-II  2.5859998  -3.0944908  8.266490 0.6964484
+## IV-II   3.7479999  -1.9324907  9.428490 0.3453895
+## V-II    8.6559999   2.9755094 14.336491 0.0007521
+## IV-III  1.1620001  -4.5184905  6.842491 0.9771836
+## V-III   6.0700001   0.3895095 11.750491 0.0308937
+## V-IV    4.9080000  -0.7724905 10.588491 0.1195580
+\end{verbatim}
+
+Significant V - II \& V - III
+
+\hypertarget{there-were-two-comparisons-that-reject-the-null-hypothesis-of-equal-means-v---ii-p-val-0.0008-and-v---iii-p-val-0.031.-looking-at-the-histogram-one-would-expect-more-pairs-with-statistical-significance-v-iv-iv-ii-but-the-high-variance-of-v-and-the-outlier-of-iv-make-comparisons-less-likely-to-be-rejected.-anova-procedures-are-not-robust-to-outliers-and-a-high-variance-makes-a-sample-much-less-likely-to-reject-the-null-hypothesis.-due-to-the-manufacturing-quality-nature-of-this-testing-and-the-strength-of-the-outlier-in-iv-i-reccomend-removing-the-outlier-in-iv-and-retesting-that-sample-to-improve-accuracy-of-the-test.}{%
+\subsection{There were two comparisons that reject the null hypothesis
+of equal means, V - II (p-val = 0.0008), and V - III (p-val = 0.031).
+Looking at the histogram, one would expect more pairs with statistical
+significance (V-IV, IV-II), but the high variance of V and the outlier
+of IV make comparisons less likely to be rejected. ANOVA procedures are
+not robust to outliers, and a high variance makes a sample much less
+likely to reject the null hypothesis. Due to the manufacturing quality
+nature of this testing and the strength of the outlier in IV, I
+reccomend removing the outlier in IV and retesting that sample to
+improve accuracy of the
+test.}\label{there-were-two-comparisons-that-reject-the-null-hypothesis-of-equal-means-v---ii-p-val-0.0008-and-v---iii-p-val-0.031.-looking-at-the-histogram-one-would-expect-more-pairs-with-statistical-significance-v-iv-iv-ii-but-the-high-variance-of-v-and-the-outlier-of-iv-make-comparisons-less-likely-to-be-rejected.-anova-procedures-are-not-robust-to-outliers-and-a-high-variance-makes-a-sample-much-less-likely-to-reject-the-null-hypothesis.-due-to-the-manufacturing-quality-nature-of-this-testing-and-the-strength-of-the-outlier-in-iv-i-reccomend-removing-the-outlier-in-iv-and-retesting-that-sample-to-improve-accuracy-of-the-test.}}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{1}
+\tightlist
+\item
+  (3 points) Using the data from the last weeks lab and homework,
+  case0501 in the Sleuth3, answer the question ``Which diets differ in
+  their mean lifetime?''
+\end{enumerate}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dietData <-}\StringTok{ }\NormalTok{case0501}
+\CommentTok{# METHOD - Use Tukey Kramer adjustment as we are doing all pairwise comparisons}
+\CommentTok{#head(dietData)}
+\NormalTok{fitDiets <-}\StringTok{ }\KeywordTok{aov}\NormalTok{(Lifetime }\OperatorTok{~}\StringTok{ }\NormalTok{Diet,}\DataTypeTok{data =}\NormalTok{ dietData)}
+
+\NormalTok{diets <-}\StringTok{ }\KeywordTok{TukeyHSD}\NormalTok{(fitDiets)}
+
+\NormalTok{diets}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   Tukey multiple comparisons of means
+##     95% family-wise confidence level
+## 
+## Fit: aov(formula = Lifetime ~ Diet, data = dietData)
+## 
+## $Diet
+##                    diff        lwr         upr     p adj
+## N/R40-N/N85  12.4254386   8.885436  15.9654413 0.0000000
+## N/R50-N/N85   9.6059550   6.202170  13.0097399 0.0000000
+## NP-N/N85     -5.2891873  -9.017748  -1.5606269 0.0008380
+## R/R50-N/N85  10.1944862   6.593417  13.7955556 0.0000000
+## lopro-N/N85   6.9944862   3.393417  10.5955556 0.0000008
+## N/R50-N/R40  -2.8194836  -6.175736   0.5367684 0.1564608
+## NP-N/R40    -17.7146259 -21.399845 -14.0294069 0.0000000
+## R/R50-N/R40  -2.2309524  -5.787127   1.3252222 0.4684413
+## lopro-N/R40  -5.4309524  -8.987127  -1.8747778 0.0002306
+## NP-N/R50    -14.8951423 -18.449713 -11.3405719 0.0000000
+## R/R50-N/R50   0.5885312  -2.832070   4.0091319 0.9963976
+## lopro-N/R50  -2.6114688  -6.032070   0.8091319 0.2460200
+## R/R50-NP     15.4836735  11.739756  19.2275913 0.0000000
+## lopro-NP     12.2836735   8.539756  16.0275913 0.0000000
+## lopro-R/R50  -3.2000000  -6.816968   0.4169683 0.1167873
+\end{verbatim}
+
+\hypertarget{diets-that-differ}{%
+\subsection{Diets that Differ:}\label{diets-that-differ}}
+
+N/R40-N/N85 12.4254386 8.885436 15.9654413 0.0000000 N/R50-N/N85
+9.6059550 6.202170 13.0097399 0.0000000 NP-N/N85 -5.2891873 -9.017748
+-1.5606269 0.0008380 R/R50-N/N85 10.1944862 6.593417 13.7955556
+0.0000000 lopro-N/N85 6.9944862 3.393417 10.5955556 0.0000008 NP-N/R40
+-17.7146259 -21.399845 -14.0294069 0.0000000 lopro-N/R40 -5.4309524
+-8.987127 -1.8747778 0.0002306 NP-N/R50 -14.8951423 -18.449713
+-11.3405719 0.0000000 R/R50-NP 15.4836735 11.739756 19.2275913 0.0000000
+lopro-NP 12.2836735 8.539756 16.0275913 0.0000000
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{2}
+\tightlist
+\item
+  (2 points) A soda company is developing a new soda. They are tying to
+  determine how much sugar to put in it to give it the best taste. In
+  order to evaluate this, they have made samples with ten different
+  sugar levels. Each level of sugar is a assigned to a random sample of
+  seven people, and each person rates the soda on a scale from 0 to 10.
+  The company would like to make inference on the difference between
+  mean ratings between each pair of sugar level.
+\end{enumerate}
+
+\begin{enumerate}
+\def\labelenumi{(\alph{enumi})}
+\item
+  How many pairwise comparisons are there?
+\item
+  Name 2 procedures that the company could use to control the familywise
+  Type I error rate on the differences of means? Explain.
+\end{enumerate}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{3}
+\tightlist
+\item
+  (2 points) A consumer research group names seven types of department
+  stores. They take a random sample of six department stores for each
+  type and record their yearly sales. They wish to find significant
+  pairwise differences in mean yearly sales for seven types of stores.
+\end{enumerate}
+
+\begin{enumerate}
+\def\labelenumi{(\alph{enumi})}
+\item
+  How many pairwise comparisons are there?
+\item
+  The group wishes to control the familywise Type I error rate at
+  1Percent using Bonferroni methods. What should be the Type I error
+  rate of each pairwise comparison?
+\end{enumerate}
+
+\end{document}
