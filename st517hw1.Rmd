@@ -8,6 +8,7 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 library(Sleuth3)
 library(ggplot2)
+
 ```
 
 1. Are basketball, baseball, and soccer players the same height on average? Suppose we take a random sample of 50 players from each of the three sports. Load the sample data |sport_heights.csv| provided with the homework file.
@@ -35,7 +36,7 @@ sportHeights$overall_mean <- with(sportHeights, mean(height))
 sportHeights$group_mean <- with(sportHeights, ave(height,sport))
 
 
-(sportHeights)
+head(sportHeights)
 ```
 
    (c) Calculate the between group sum of squares and within group sum of squares and their corresponding degrees of freedom.
@@ -89,7 +90,7 @@ sportHeights['residuals'] <- with(sportHeights, height - group_mean)
 boxplot(sportHeights$residuals~sportHeights$sport)
 
 ```
-   ##The equal variance assumption is likely violated as the basketball variance is much greater than baseball and soccer.
+## The equal variance assumption is likely violated as the basketball variance is much greater than baseball and soccer.
    
    
    (h) Use |oneway.test()| again, this time with |var.equal = FALSE|. Give the F-statistic, p-value, and denominator degrees of freedom. Does the test indicate a different conclusion?
@@ -106,12 +107,12 @@ oneway.test(height~sport, data = sportHeights, var.equal = F)
 
    (i) In actuality, the data is generated from distributions with slightly different means, and non-constant variances. In two sentences or less, comment on what the difference in conclusions from the two tests.  Does this tell us anything about the robustness of the F-test to non-constant spreads?
    
-   ## The different conclusions show that the one-way ANOVA test is mildly robust to non-constant spreads. the roughly 0.19 difference is large, but we still have a similar outcome. 
+## The different conclusions show that the one-way ANOVA test is not robust to non-constant spreads.
    
 
    (j) Food for thought: how would you perform a simulation to evaluate the robustness of the F-test to violation of the equal variance assumption? (You do not need to do this for the homework!)
    
-   ## To evaluate the robustness we could replicate this same procedure many times for a known value, and then compare it to a simulated value.
+## To evaluate the robustness we could replicate this same procedure many times for a known value, and then compare it to a simulated value.
    
 
 2. Using the data from the lab (|case0501| in the |Sleuth3| package), answer the question "Are there differences between the diets in their effect on lifetime?"
@@ -120,6 +121,7 @@ $$H_0: \mu_{diet1} = \mu_{diet2} = \mu_{diet3} = \mu_{diet4} = \mu_{diet5} = \mu
 $$H_A: \mu_{diet1} \neq \mu_{diet2} \neq \mu_{diet3} \neq \mu_{diet4} \neq \mu_{diet5} \neq \mu_{diet6}$$
 
 ```{r}
+# due to low pvalue var.equal can be either true or false and yield the same result (as seen in lab)
 oneway.test(Lifetime ~ Diet, data = case0501, var.equal = T)
 ```
 

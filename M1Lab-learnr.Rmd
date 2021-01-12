@@ -165,6 +165,7 @@ Finally, we have the choice of performing the standard one-way ANOVA, which assu
 
 ```{r}
 oneway.test(Lifetime ~ Diet, data = case0501, var.equal = T)
+
 ```
 
 Note that the output here matches the test statistic value and the p-value that we computed by hand.
