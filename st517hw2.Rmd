@@ -29,7 +29,7 @@ qplot(Compound, Time , data = bearing, geom = 'boxplot')
 ```
 
 (b) (2 points) Determine the pairs of engine ball bearing compounds for which there is a significant
-difference in mean failure times. Present your findings in a short statistical report (≈ 4 sentences).
+difference in mean failure times. Present your findings in a short statistical report ( 4 sentences).
 
 $$H_0: \mu_{I} = \mu_{II},  \mu_{I} = \mu_{III}, \mu_{I} = \mu_{IV}, \mu_{I} = \mu_{V} ... for \ all \ pairs $$
 $$H_A: \mu_{I} \neq \mu_{II},  \mu_{I} \neq \mu_{III}, \mu_{I} \neq \mu_{IV}, \mu_{I} \neq \mu_{V} ... for \ any \ pairs $$
@@ -45,7 +45,7 @@ TukeyHSD(fit)
 ```
 Significant V - II & V - III
 
-## There were two comparisons that reject the null hypothesis of equal means, V - II (p-val = 0.0008), and V - III (p-val = 0.031). Looking at the histogram, one would expect more pairs with statistical significance (V-IV, IV-II), but the high variance of V and the outlier of IV make comparisons less likely to be rejected. ANOVA procedures are not robust to outliers, and a high variance makes a sample much less likely to reject the null hypothesis. Due to the manufacturing quality nature of this testing and the strength of the outlier in IV, I reccomend removing the outlier in IV and retesting that sample to improve accuracy of the test.
+## There were two comparisons that reject the null hypothesis of equal means, V - II (p-val = 0.0008), and V - III (p-val = 0.031). Looking at the Box Plot, one would expect more pairs with statistical significance (V-IV, IV-II), but the high variance of V and the outlier of IV make comparisons less likely to be rejected. ANOVA procedures are not robust to outliers, and a high variance makes a sample much less likely to reject the null hypothesis. Due to the manufacturing quality nature of this testing and the strength of the outlier in IV, I reccomend removing the outlier in IV and retesting that sample to improve accuracy of the test.
 
 2. (3 points) Using the data from the last weeks lab and homework, case0501 in the Sleuth3, answer the
 question “Which diets differ in their mean lifetime?”
@@ -87,7 +87,7 @@ mean ratings between each pair of sugar level.
 (b) Name 2 procedures that the company could use to control the familywise Type I error rate on the
 differences of means? Explain.
 
-## The data is not continuous, and it's unlikely to be normal with a sample size that small. I reccomend using either the *Kruskal-Wallis test*, or *linear combinations* like in the disabillity interview example in lecture.
+## I reccomend using either the *TukeyHSD*, or *Bonferoni Adjustment*.
 
 
 4. (2 points) A consumer research group names seven types of department stores. They take a random
@@ -98,9 +98,9 @@ pairwise differences in mean yearly sales for seven types of stores.
 
 ## There are 7c2 comparisons, or *21 combinations*
 
-(b) The group wishes to control the familywise Type I error rate at 1Percent using Bonferroni methods.
+(b) The group wishes to control the familywise Type I error rate at 1 Percent using Bonferroni methods.
 What should be the Type I error rate of each pairwise comparison?
 
 ## The type I error rate should be:
-$$(1-\alpha)^6$$ , or $$ (1-0.05)^6 $$ 
-Which Equals *0.735*
+$$(1-\alpha/21)$$ , or $$ (1-0.01/21) $$ 
+Which Equals *0.9995238*

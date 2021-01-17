@@ -60,7 +60,6 @@ pvals
     ```{r}
    
     fit <- aov(Sleep ~ Group, data = sleepData)
-    
     TukeyHSD(fit)
     ```
 
