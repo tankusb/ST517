@@ -1,0 +1,324 @@
+---
+title: "Module 4 Lab Examples"
+author: "Ben Tankus"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(broom)
+library(car)
+library(ggplot2)
+library(ggExtra)
+library(MASS)
+library(reshape)
+MLB <- read.csv("MLB.csv")
+```
+
+## Introduction
+
+This lab covers a number of topics, and is divided into two sections. The first section uses a baseball dataset to proceed through the steps associated with fitting a multiple linear regression (MLR) model. These steps include exploratory data analysis, fitting the model, assessing the validity of the regression assumptions, and calculating case influence statistics. The second section is a simulation study that examines the impact of multicollinearity in the explanatory variables in a MLR model.
+
+## Major League Baseball Data
+
+### The Data and Initial Plots
+
+The dataset we will use is a ficticious random sample of 28 Major League Baseball (MLB) teams season statistics. Each observation is one season for one team, and the variables are team totals in four offensive categories. The dataset `MLB.csv` is already loaded, let's take a look at it.
+
+```{r echo=TRUE}
+head(MLB)
+```
+
+Our question of interest is: what is the relationship between the response variable runs (`R`), and the explanatory variables home run (`HR`), base on balls (`BB`),	and strikeout (`SO`). A good place to start is scatter plots of runs against each of the three individual predictors. 
+
+**Plot each `HR`, `BB`, and `SO`, versus `R`.**
+\pagebreak
+```{r echo=TRUE, fig.height=4}
+qplot(HR, R, data = MLB)
+```
+
+```{r echo=TRUE, fig.height=4}
+qplot(BB, R, data = MLB)
+```
+
+\pagebreak
+```{r echo=TRUE, fig.height=3.5}
+qplot(SO, R, data = MLB)
+```
+
+
+The relationships between (1) runs and home runs, and (2) runs and base on balls, looks positive and linear, with no noteworthy outliers. The relationship between runs and strikeouts also looks approximately linear, but negative, and also with no outliers.
+
+Without further ado, let's go ahead and fit a model.
+
+### Multiple Linear Regression
+
+The R code for multiple linear regression (MLR) is very similar to the R code for simple linear regression (SLR). We again use `lm()`, but we need to be sure to specify each explanatory variable we want to include in the model. The model we are fitting is: 
+
+$$Runs = \beta_{0} + \beta_{1}HR + \beta_{2}BB + \beta_{2}SO + \epsilon_{i}, $$
+
+where $\epsilon_{i} \stackrel{iid}{\sim} N(0, \sigma^{2})$.
+
+**Fit the above model using the `lm()` function. Save your model to the variable `MLB_fit`. Then call `summary` on your model.**
+
+```{r echo=TRUE}
+MLB_fit <- lm(R ~ HR + BB + SO, data = MLB)
+summary(MLB_fit)
+```
+ 
+Looking at the output, we see that all three explanatory variables are significant, with p-values less than 0.01. The next step is assessing the validity of the model assumptions.
+
+### Residual Diagnostics
+
+One way to evaluate the validity of our assumptions is by looking at residual plots. With more explanatory variables, we have more residual plots to look at. Recall from last week one way to get the residuals and fitted values is using the `augment()` function in `broom`:
+
+```{r MLB-diag, exercise = TRUE}
+MLB_diag <- augment(MLB_fit)
+head(MLB_diag)
+```
+
+Then it is good practice to examine the residuals against each predictor, and against the fitted values (the `geom_hline()` adds a horizontal line at zero, which can be useful to help you look for patterns):
+
+\pagebreak
+```{r echo=TRUE, fig.height=4}
+qplot(HR, .resid, data = MLB_diag) + 
+  geom_hline(aes(yintercept=0))
+
+qplot(BB, .resid, data = MLB_diag) + 
+  geom_hline(aes(yintercept=0))
+```
+
+\pagebreak
+
+```{r echo=TRUE, fig.height=4}
+qplot(SO, .resid, data = MLB_diag) +
+  geom_hline(aes(yintercept=0))
+
+qplot(.fitted, .resid, data = MLB_fit) +
+  geom_hline(aes(yintercept=0)) 
+```
+
+The residuals versus explanatory variable plots give no indication of non-linearity. The residuals versus fitted values plot also does not raise any red flags: no dramatic indication of non-normality, or non-constant variance.
+
+### Case-Influence Statistics
+
+In general, one of the concerns with outliers is that an invalid observation could inappropriately have a large impact on inference. In the case of suspicious outliers, we would want to know the effect of the observation on the MLR, and case influence statistics help analyze that effect. We look at two case influence statistics here--- leverage and Cook's distance.
+
+#### Leverage
+
+One category of potentially influential observations are those far from the "center" of the explanatory variables. Such a point is said to have "high leverage," which can be quantified with the corresponding diagonal element of something called the hat matrix. Conveniently, the output from the `augment()` function includes a column called `.hat`, the diagonal elements of the hat matrix.
+
+```{r echo=TRUE, fig.height=4}
+qplot(1:28, .hat, data = MLB_diag) 
+MLB_diag[MLB_diag$.hat > 0.2, ] #Check which points have high leverage
+MLB_diag[MLB_diag$.hat > 0.3, ]
+```
+
+Assessing the plot visually, four observations stand out as having greater (too much greater) leverage than the rest. The last two lines of code identify the high leverage observations. If we had noticed outliers in our initial plots of the explanatory variables against the response, then we would want to know if the outliers had high leverage. 
+
+#### Cook's Distance
+
+The "Cook's D" statistic measures the overall impact of an observation on the $\hat{\beta}$ values. In other words, an observation's Cook's D will be large if its removal would result in a large change in the $\beta$ estimates.  Again, the result from `augment()` includes a `.cooksd` column:
+
+```{r echo=TRUE, fig.height=4}
+qplot(1:28, .cooksd, data = MLB_diag) 
+MLB[MLB_diag$.cooksd > 0.6, ] #Check which points have high influence
+```
+
+Notice that observation 10 is among the most influential observations in terms of $\beta$ estimates (Cook's Distance), and in terms of leverage. If observation 10 had been an outlier, then it would be up to the researcher to decide if observation 10 is valid. It is very important to note--an observation **should not be removed** simply because it is influential.
+
+## Multicollinearity
+
+When the explanatory variables are correlated, the variance of $\beta$ parameter estimates are increased.  This is because it is difficult to assess how much of an effect each of two (or more) highly correlated variables have on the response variable--they sort of 'share' their effect.  This section demonstrates this fact through simulations. You won't be writing any code, but make sure to follow along and understand the material. 
+
+### Simulation Study
+
+First, define the following model:
+
+$$ Y_{i} = 0.5 + 0.3 X_{1i} + 0.7 X_{2i} + \epsilon_{i}, $$
+
+where $\epsilon_{i} \stackrel{iid}{\sim} N(0, \sigma^{2})$. The choice of coefficients (0.5, 0.3, 0.7) was arbitrary; we just need a model to work with. Now, consider two scenarios:  
+
+* $X_{1i}$ and $X_{2i}$ are uncorrelated---the scenario we are used to.
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height= 4, fig.width = 4}
+mu1 <- matrix(c(0,0)) 
+sigma1 <- matrix(c(1, 0, 0, 1), ncol = 2)
+X1 <- mvrnorm(n = 250, mu = mu1, Sigma = sigma1)
+p <- qplot(V1, V2, data = as.data.frame(X1)) + xlab(expression(X[1])) + ylab(expression(X[2]))
+ggExtra::ggMarginal(p, type = "histogram")
+```
+
+Notice that the individual histograms for $X_{1}$ and $X_{2}$ are very similar, reflecting the fact that, when considered separately, they have identical distributions to one another.
+
+\pagebreak
+
+* $X_{1i}$ and $X_{2i}$ are highly correlated---multicollinear, the scenario we are learning about!
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height= 4, fig.width = 4}
+mu1 <- matrix(c(0,0)) 
+sigma2 <- matrix(c(1, 0.9, 0.9, 1), ncol = 2)
+X2 <- mvrnorm(n = 250, mu = mu1, Sigma = sigma2)
+p2 <- qplot(V1, V2, data = as.data.frame(X2)) + xlab(expression(X[1])) + ylab(expression(X[2]))
+ggExtra::ggMarginal(p2, type = "histogram")
+```
+
+
+Notice the histograms in the margins again look very similar. In fact, despite being correlated, when considered separately each distribution is N(0,1).  
+
+The issue of interest here is: what happens to the variance of the estimates of $\beta_{0}$, $\beta_{1}$, and $\beta_{2}$ when $X_{1}$ and $X_{2}$ are correlated? In other words, is it harder to estimate the $\beta$ coefficients when $X_{1}$ and $X_{2}$ are correlated? Let's run a simulation to find out. Here are the steps.
+
+
+1. Define $\beta_{0} = 0.5$, $\beta_{1} = 0.3$, and $\beta_{2} = 0.7$
+2. Define the mean of $X_{1}$ and $X_{2}$
+3. Generate correlated/uncorrelated $X_{1}$ and $X_{2}$ data
+4. Generate the response variable; use model equation and add N(0,1) noise
+5. Fit a MLR model
+6. Extract the coefficient estimate; $\hat{\beta}_{0}$, $\hat{\beta}_{1}$, or $\hat{\beta}_{2}$
+7. Repeat steps (4) through (6) many times.
+
+
+Let's start by writing a function that will accomplish steps (4) through (6).
+
+```{r, echo=TRUE}
+fitmodel <- function(X1, X2, beta0, beta1, beta2){ 
+  n <- length(X1)
+  Y <- beta0 + beta1*X1 + beta2*X2 + rnorm(n, 0, 1) # Generate/calculate response 
+  fit <- lm(Y ~ X1 + X2) # Fit the model
+  fit$coefficients # Return estimated coefficient values
+}
+```
+
+Our function will take five arguments: `X1` is a vector of the values for the first predictor, `X2` is a vector of the values for the second predictor, and `beta0`, `beta1`, and `beta2` are the values of the intercept, coefficient for $X_{1}$, and coefficient for $X_{2}$, respectively.  The two predictors should be generated before running the function, which can be done using the `mvrnorm()` function and the desired covariance matrix, as we have already seen. The first line of code in this function calculates the sample size `n`, and the second line, `Y <- beta0 + beta1*X1 + ...`, creates the response variable by calculating $Y_{i} = \beta_0 + beta_1*X_{1i} + \beta_2* X_{2i}$, and then adding a randomly generated N(0,1) number to it---the error term. The next line fits a MLR model, and the final line extracts the coefficient estimates, $\hat{\beta}_{0}, \hat{\beta}_{1}$, and $\hat{\beta}_{2}$ from the model.
+
+Let's try it for the uncorrelated explanatory variables scenario. Remember, we need to complete steps (1), (2), (3), and (7) with the function we just created.
+
+```{r, echo=TRUE, message=FALSE, fig.height= 4}
+# Step 1
+beta0 <- 0.5 # define beta_0
+beta1 <- 0.3 # define beta_1, 
+beta2 <- 0.7 # define beta_2
+
+# Step 2
+mu <- matrix(c(0,0)) # Set means for X_1, X_2
+sigma1 <- matrix(c(1, 0, 0, 1), ncol = 2) # Cov Matrix: Cov(X_1, X_2) = 0
+
+# Step 3
+set.seed(1822) # Francis Galton born, invented regression concept
+
+n <- 250
+X <- mvrnorm(n, mu=c(0,0), Sigma=sigma1)
+X1 <- X[,1]
+X2 <- X[,2]
+
+# Step 7
+beta_estimates <- replicate(10000, fitmodel(X1, X2, beta0, beta1, beta2))
+```
+
+The object that we get from the last line above, `beta_estimates`, will be a matrix that has 3 rows (one row for each coefficient estimate: $\hat{\beta}_{0}, \hat{\beta}_{1}$, and $\hat{\beta}_{2}$), and 1000 columns (one column for each replicated run of this function--each new dataset that we generate).
+
+To examine the intercept estimates, we extract the first row of the `beta_estimates` object: `beta_estimates[1,]`.  We can make a histogram of the resulting estimates:
+
+```{r, echo=TRUE, message=FALSE, fig.height= 4}
+# Display results
+qplot(beta_estimates[1,]) + ylab("") + 
+  theme(axis.ticks = element_blank(), axis.text.y = element_blank()) + 
+  xlab(expression(beta[0]))
+```
+
+We can also calculate the standard deviation of these estimates using the function `sd()`.
+
+```{r, echo=TRUE}
+sd(beta_estimates[1,])
+```
+
+The standard deviation of our estimates is about 0.063 (rounded to third decimal place). We see in the histogram that our estimates are clustered around 0.5, which is the true value of $\beta_{0}$.
+
+Notice that the covariance matrix we specified in "Step 2" gives independent N(0,1) random variables for $X_{1}$ and $X_{2}$.  In your lab assignment for this week, you will be asked to calculate the standard deviations of the estimates of $\beta_{1}$ and $\beta_{2}$ for the uncorrelated predictor case, and the standard deviations of the estimates of $\beta_{0}, \beta_{1}$, and $\beta_{2}$ for the correlated predictor case.
+
+If you plot the resulting coefficient estimates for the uncorrelated and correlated predictor cases, you should see something similar to the results below.
+
+```{r, message=FALSE, echo=FALSE}
+
+# Uncorrelated
+sigma1 <- matrix(c(1, 0, 0, 1), ncol = 2) # Cov Matrix: Cov(X_1, X_2) = 0
+
+# Step 3
+set.seed(1822) # Francis Galton born, invented regression concept
+
+n <- 250
+X <- mvrnorm(n, mu=c(0,0), Sigma=sigma1)
+X1 <- X[,1]
+X2 <- X[,2]
+
+# Step 7
+uncor_beta_estimates <- replicate(10000, fitmodel(X1, X2, beta0, beta1, beta2))
+
+# Correlated
+sigma2 <- matrix(c(1, 0.9, 0.9, 1), ncol = 2)
+
+# Step 3
+set.seed(1822) # Francis Galton born, invented regression concept
+
+n <- 250
+X <- mvrnorm(n, mu=c(0,0), Sigma=sigma2)
+X1 <- X[,1]
+X2 <- X[,2]
+
+# Step 7
+cor_beta_estimates <- replicate(10000, fitmodel(X1, X2, beta0, beta1, beta2))
+
+results <- cbind(t(uncor_beta_estimates), t(cor_beta_estimates))
+
+gg <- apply(results, 2, var)
+gg[4:6]/gg[1:3]
+
+colnames(results) <- paste("hat(beta)[", rep(0:2, 2), "]:", rep(c("Uncorrelated", "Correlated"), each = 3), sep = "")
+ 
+results <- melt(results)
+colnames(results) <- c("index", "Param", "Estimate")
+results$beta <- sapply(strsplit(as.character(results$Param), ":"), "[[", i = 1)
+results$data <- factor(sapply(strsplit(as.character(results$Param), ":"), "[[", i = 2), levels = c("Uncorrelated", "Correlated"))
+
+qplot(Estimate, data = results) + facet_grid(data ~ beta, labeller = label_parsed) +  ylab("") +  theme(axis.ticks = element_blank(), axis.text.y = element_blank()) 
+```
+
+### Variance Inflation Factor
+
+The R library `car` includes a function `vif()` that calculates the variance inflation factor (VIF) for each of the predictors in a fitted model. To use this function, you just need to supply as an argument the name of a model fit using the `lm()` function. We can apply this function to our simulated MLB model or to the models we fit in the multicollinearity exploration just above.  
+
+First, let's consider the MLB model:
+
+```{r, echo=TRUE}
+vif(MLB_fit)
+```
+
+The resulting values of the VIF for each variable in the MLB model are quite modest, all very close to one.  This is not surprising if we consider the correlation matrix of the predictors in the MLB dataset:
+
+```{r, echo=TRUE}
+cor(MLB[,2:4])
+```
+
+We see that all of the correlations are pretty small, which means there cannot be too much multicollinearity in this dataset.  *Note that the more predictors you have, the more even small correlations can matter---if we had 30 predictors instead of 3, it is entirely possible that we would have high VIFs for some variables, even with small pairwise correlation values.*
+
+
+Next, we consider the VIFs for the data that we generated with highly correlated predictors:
+
+```{r, echo=TRUE}
+sigma2 <- matrix(c(1, 0.9, 0.9, 1), ncol = 2) # Cov Matrix: Cov(X_1, X_2) = 0.9
+
+set.seed(1822)
+n <- 250
+X <- mvrnorm(n, mu=c(0,0), Sigma=sigma2)
+X1 <- X[,1]
+X2 <- X[,2]
+
+Y <- beta0 + beta1*X1 + beta2*X2 + rnorm(n, 0, 1) # Generate/calculate response 
+fit_cor <- lm(Y ~ X1 + X2) # Fit the model
+
+vif(fit_cor)
+```
+
+Here, we see much larger VIFs for the two predictors.  This will change each time you generate new values for $X_1$ and $X_2$ (changing the random seed), because it is a function of the sample correlation between these variables--but it will be large (in the range ~ 4--6 for this sample size `n = 250`) for any simulated $X_1$ and $X_2$ that have a true correlation of 0.9.
+
+

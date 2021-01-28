@@ -1,0 +1,153 @@
+---
+title: "HW4"
+author: "Ben Tankus"
+date: "1/27/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+ST 517: Data Analytics I
+Module 4 Homework
+1. (8 points) Consider the Sleuth3 dataset case0901, which contains the results of a study of the Meadowfoam plant. Familiarize yourself with the study and load the data.
+
+```{r}
+library(Sleuth3)
+library(ggplot2)
+library(broom)
+
+flowerData <- case0901
+head(flowerData)
+
+
+```
+
+
+(a) Create plots of the response variable Flowers against each of the explanatory variables Time and
+Intensity (provide only your code). Do you think the late (1) or early (2) start time of light
+intensity regiments led to greater average number of flowers per meadowfoam plant? Do you think
+flower abundance increased or decreased as the light intensity treatment increased?
+
+```{r}
+qplot(Time, Flowers , data = flowerData)
+#qplot(Flowers ~ Time, data = flowerData, geom = 'boxplot')
+qplot(Intensity, Flowers , data = flowerData)
+
+cor(flowerData)
+```
+
+## Looking at the plots, late has *slighly* higher average number of flowers, and as intensity increases, flower count decreases. The spread of flower responses to the time input is large, therefore it will be difficult to confirm statistical significance. 
+
+
+(b) Write out the the multiple linear regression model in statistical notation, where Flowers is the
+response, and Time and Intensity are the explanatory variables. Give the assumed distribution
+of the $\epsilon_is$. Then fit the model with lm(), and give sigma. Note: the Time term should be an indicator
+variable; you accomplish this in R by making it a factor.
+
+* Y = Flowers
+* X_1 = Time
+* X_2 = Intensity
+
+$$\mu(Y | X_1, X_2) = \beta_1X_1 + \beta_2X_2 $$
+### NOTE: There is no interaction term as the covariance of time to intensity is 0.
+
+## The assumed distribution of $\epsilon_is$ is normal around zero.
+## $\hat\sigma$ = 6.441 
+
+
+```{r}
+flowerData['Timefactor'] <- factor(flowerData$Time)
+
+fit <- lm(Flowers ~ Timefactor + Intensity, data = flowerData)
+
+summary(fit)
+
+```
+
+
+(c) Suppose we fit a model with an interaction term. In non-technical terms what will the interaction
+coefficient tell us? Suppose we fit separate models for Time = 1 and Time = 2 observations;
+what would we see if the interaction from the full model (which includes Time) is statistically
+significant?
+
+
+## If the interaction is statistically significant, the interaction term will tell us the additional affect of intensity when plants recieve the late treatment compared to the early treatment. 
+## If the interaction is not statistically significant the interaction term will equal zero.
+
+## If we fit two seperate models, one for Time = 1 and another for Time = 2, the model will have two coefficients (slope, and intercept), along with only one explanitory variable (Intensity). This differs from the original model with three coefficients and two explanitory variables (time and intensity). The estimates of the intensity coefficient will be identical between the original and seperate models, whereas the coefficients for each time parameter will obviously change. 
+
+## As expected, the time = 2 model has a larger intercept value of 83.14 (compared to 71.62 time = 1). This is a reaction to the the larger mean flower response of the time = 2 coefficient.
+
+```{r}
+flowerSplit <- split(flowerData, flowerData['Time'])
+df1 <- data.frame(flowerSplit[1])
+df2 <- data.frame(flowerSplit[2])
+
+fitTime1 <- lm(X1.Flowers ~ X1.Intensity, data = df1)
+summary(fitTime1)
+
+fitTime2 <- lm(X2.Flowers ~ X2.Intensity, data = df2)
+summary(fitTime2)
+
+```
+
+(d) Give the model that includes an interaction term, and then fit it. Give the p-value from the test of
+this term’s significance. What do you conclude?
+
+```{r}
+
+fitInteraction <- lm(Flowers ~ Timefactor + Intensity + Timefactor*Intensity, data = flowerData)
+summary(fitInteraction)
+
+```
+
+## Pvalue of time and intensity is 0.91 suggesting we accept the null hypothesis that there is no interaction.
+
+2. (2 points) Now suppose a graduate student in your department tells you he has three observations (table
+below) he forgot to include in the original dataset.
+
+|Obs.#|  Flowers|  Time| Intensity  |
+|25   |   80    |   2|     150     |
+|26   |    80     |  2 |    900     |
+|27   |    40    |   2  |   1200    |
+
+You can add these observations to your data with:
+```{r}
+flowerData_updated <- rbind(case0901,
+data.frame(Flowers = c(80, 80, 40), Time = c(2, 2, 2), Intensity = c(150, 900, 1200)))
+
+```
+
+(a) Create a Flowers vs. Intensity plot of the new 27 observation dataset.
+
+```{r}
+qplot(Intensity, Flowers, data = flowerData_updated)
+
+augFit <- lm(Flowers ~ factor(Time) + Intensity, data = flowerData_updated)
+
+#Calc leverage
+flowerData_updated_aug <- augment(augFit)
+flowerData_updated_aug[flowerData_updated_aug$.hat == max(flowerData_updated_aug$.hat),] # max leverage
+flowerData_updated_aug[flowerData_updated_aug$.cooksd == max(flowerData_updated_aug$.cooksd),] # max leverage
+
+flowerData_updated_aug
+```
+
+
+(b) Of these three new observations, which has the greatest leverage? Explain why in non-technical
+terms, referencing the Flowers vs. Intensity plot.
+
+
+## The observation of (Flowers: 40, Time: 2, Intensity: 1200) has the greatest leverage. There are a few points that are further from the data set (Ex. 80, 2, 900) but the (40,2,1200) has the most *leverage* because it has the most unique combination of values. 40 is a very low value for flowers, and 1200 is a very high value for intensity. The point with the largest cook's distance (80,2,900) has a unique flowers value, but a relatively common Intensity value. 
+
+
+(c) Of these three new observations, which has the greatest Cook’s D statistic? Explain why in nontechnical terms, referencing the Flowers vs. Intensity plot.
+
+## The observation of (Flowers: 80, Time: 2, Intensity: 900) has the greatest cook's distance. This point will have the greatest influence on the regression model because it is far away from the estimate line, *and* it is far away from the other points. If this point is removed there will be a large impact on the regression model.
+
+(d) Of these three new observations, which has neither the greatest leverage nor the greatest Cook’s
+D? Explain why in non-technical terms, referencing the Flowers vs. Intensity plot.
+
+## The remaining point is (Flowers: 80, Time: 2, Intensity: 150). This point has low cook's D because if it were removed, the model would only minimally change. It has low leverage because it does not have a unique combination of values and is surrounded by 3 other points.

@@ -1,0 +1,82 @@
+---
+title: "Module 3 Lab Submission"
+author: "Ben Tankus"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(broom)
+```
+
+Consider the `cars` data, which contains cars speed in MPH and stopping distance in feet. Load the data with `data("cars")`.
+
+```{r, echo = TRUE}
+data("cars")
+qplot(speed, dist, data = cars)
+```
+
+* Fit a simple linear model with `dist` as the response and `speed` as the explanatory variable.
+
+```{r}
+
+fit <- lm(dist ~ speed, data = cars)
+summary(fit)
+   
+```
+
+
+* Create two diagnostic plots using the residuals, one with `speed` on the x-axis, and the other with the fitted values from the model. Do the plots look good: do these data seem to satisfy the assumptions for a linear regression model?
+
+```{r}
+augFit <- augment(fit)
+
+mean(fit$residuals)
+
+
+
+qplot(speed, .resid, data = augFit, main = 'Speed VS Residuals')
+qplot(.fitted, .resid, data = augFit, main = 'Fitted VS Residuals')
+augFit
+   
+```
+## I do not belive the data is good to analyse. The variance on the right is much higher than on the left (non-constant varience), and the r-squared value is only 0.65 which is quite low.This r-squared value means the model does not fit the data well.
+
+* Use `predict()` to get the confidence and prediction intervals using the following new data.
+
+```{r}
+new <- data.frame(speed = c(6, 10.5, 14.7, 18.3, 21))
+new
+
+print('Prediction')
+predict(fit, newdata = new, interval = 'prediction')
+
+print('Confidence')
+predict(fit, newdata = new, interval = 'confidence')
+
+```
+
+Now note that there are many speeds for which there were multiple observations at that speed.  This means we can perform a lack-of-fit test on this data.  
+
+* Fit a separate means model using `lm()` and `factor()` to treat `speed` as a categorical variable.
+
+```{r}
+fitSSM <- lm(dist ~ factor(speed), data = cars )
+summary(fitSSM)
+
+
+```
+
+* Compare the separate means model to the simple linear regression model using the `anova()` function. 
+
+```{r}
+
+anova(fit, fitSSM)
+
+```
+
+## Based on the results of this lack-of-fit F-test, we would fail to reject the null hypothesis that the linear model is adequate (p-value = 0.29, F-statistic = 1.24 on 17 and 31 degrees of freedom).  We would therefore conclude that there is no departure from linearity in the relationship between Distance and speed.
+
+
+
