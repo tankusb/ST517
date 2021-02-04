@@ -17,6 +17,8 @@ First, we will explore the Brain size data in the data set `case0902` from the `
 ```{r echo=TRUE}
 help(case0902)
 head(case0902)
+dfSpecies <- case0902
+cor(dfSpecies[,-1])
 ```
 
 1. **Fit a linear model with `Brain` as the response variable, and `Body`, `Gestation`, and `Litter` as the predictor variables.**
@@ -44,7 +46,7 @@ augFit[augFit$.cooksd == max(augFit$.cooksd), ]
 
 ```
 
-## Elephants have the highest leverage at 0.72, and also the highest cook's distance at 24.29
+## Elephants have the highest leverage at *0.72*, and also the highest cook's distance at *24.29*
 
 
 
@@ -102,7 +104,6 @@ X2_2 <- X2_2[,2]
 beta_estimates <- replicate(10000, fitmodel(X1, X2, beta0, beta1, beta2))
 beta_estimatesCOV <- replicate(10000, fitmodel(X1_2, X2_2, beta0, beta1, beta2))
 
-#fitmodel(X1, X2, beta0, beta1, beta2)
 
 ```
 
@@ -128,12 +129,12 @@ print(paste("X2:", sd(beta_estimatesCOV[3,])))
 |:--------------:|:---------------------:|
 | *Uncorrelated* |                       |
 |   $\beta_0$    |          0.0635       |
-|   $\beta_2$    |          0.0614       |
-|   $\beta_3$    |          0.062        |
+|   $\beta_1$    |          0.0614       |
+|   $\beta_2$    |          0.062        |
 |  *Correlated*  |                       |
 |   $\beta_0$    |          0.0625       |
-|   $\beta_2$    |          0.141        |
-|   $\beta_3$    |          0.142        |
+|   $\beta_1$    |          0.141        |
+|   $\beta_2$    |          0.142        |
 
 
 
@@ -151,23 +152,25 @@ $$SE  =   \hat\sigma * \sqrt{\frac{1}{1-R^2_{x_j}}}\sqrt{\frac{1}{\sum(X_ij - \b
 ```{r}
 
 speciesData <- case0902
-print("VIF")
-vif(fit_full)
+#print("VIF")
+#vif(fit_full)
 print("")
 print("Correlation Matrix")
 cor(speciesData[,2:5])
 ```
 
+X1: 5.304 , X2: 5.304
+
 **Compare the variances (*squared standard deviations*) in the table above for the correlated predictor setting to the variances for the uncorrelated predictor setting: what is the ratio of the variance of $\hat{\beta}_1$ in the correlated predictor setting to the variance of $\hat{\beta}_1$ in the uncorrelated predictor setting?  Similarly, what is the variance of $\hat{\beta}_2$ in the correlated predictor setting to the variance of $\hat{\beta}_2$ in the uncorrelated predictor setting?  Do these ratios seem close to the VIFs that we calculated?**
 
 ```{r}
 
-print(paste("Beta1 Corr / Uncorr:", round(0.141 / 0.0614,4) ))
+print(paste("Beta1 Corr / Uncorr:", round((0.141)^2 / (0.0614)^2,4) ))
 
-print(paste("Beta2 Corr / Uncorr:", round(0.142 / 0.062,4) ))
+print(paste("Beta2 Corr / Uncorr:", round((0.142)^2 / (0.062)^2,4) ))
 
-mean(c(1.82, 2.76, 1.74))
+#mean(c(1.82, 2.76, 1.74))
 
 ```
 
-It seems that the beta 1 and beta 2 ratios are very close to the VIF values we calculated. They seem to be close to the weighted average of the VIFs.
+It seems that the beta 1 and beta 2 ratios are very close to the X1 and X2.

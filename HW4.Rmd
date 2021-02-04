@@ -50,7 +50,7 @@ variable; you accomplish this in R by making it a factor.
 * X_1 = Time
 * X_2 = Intensity
 
-$$\mu(Y | X_1, X_2) = \beta_1X_1 + \beta_2X_2 $$
+$$\mu(Y | X_1, X_2) = \beta_1X_1 + \beta_2X_2 + \epsilon$$
 ### NOTE: There is no interaction term as the covariance of time to intensity is 0.
 
 ## The assumed distribution of $\epsilon_is$ is normal around zero.
@@ -151,3 +151,4 @@ terms, referencing the Flowers vs. Intensity plot.
 D? Explain why in non-technical terms, referencing the Flowers vs. Intensity plot.
 
 ## The remaining point is (Flowers: 80, Time: 2, Intensity: 150). This point has low cook's D because if it were removed, the model would only minimally change. It has low leverage because it does not have a unique combination of values and is surrounded by 3 other points.
+
