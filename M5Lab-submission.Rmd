@@ -1,0 +1,100 @@
+---
+title: "Module 5 Lab Submission"
+author: "Ben Tankus"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(broom)
+library(ggplot2)
+library(MASS)
+library(Sleuth3)
+```
+
+Again we consider the Brain size data in the data set `case0902` from the `Sleuth3` library. You can read more about this data set by viewing the help file:
+
+```{r echo=TRUE}
+help(case0902)
+head(case0902)
+```
+
+In Lecture 2 of this Module, we considered modeling all four variables on the log scale, and we compared two models: a full model with log-Body, log-Gestation, and log-Litter as predictors, and a reduced model with only log-Body as a predictor.
+
+1. **Fit the two models described above (and as shown on slide 15 of Lecture 2).**
+
+```{r echo=TRUE}
+fitFull <- lm(log(Brain) ~ log(Body) + log(Gestation) + log(Litter), data = case0902)
+fitRed <- lm(log(Brain) ~ log(Body), data = case0902)
+
+
+```
+
+Now suppose we have four new species, with the following values of Body, Gestation, and Litter:
+
+| Species | Body | Gestation | Litter |
+|:-------:|:----:|:---------:|:------:|
+| A       | 1    | 50        | 1      |
+| B       | 1    | 50        | 2      |
+| C       | 1    | 150       | 1      |
+| D       | 50   | 50        | 1      |
+
+
+2. **Create a new data frame with these values, and use the `predict()` function to predict the log-brain size for these new species.**
+
+```{r echo=TRUE}
+newData = data.frame(
+  Species = c('A', 'B', 'C', 'D')
+  , Body = c(1,1,1,50)
+  , Gestation = c(50,50,150,50)
+  , Litter = c(1,2,1,1)
+)
+print('FULL MODEL')
+predict(fitFull, newdata = newData)
+print('REDUCED MODEL')
+predict(fitRed, newdata = newData)
+
+
+```
+
+
+3. **Obtain confidence intervals for the mean log-brain size of the new species above, using the `interval = "confidence"` argument in the `predict()` function.**
+
+```{r}
+   
+print('FULL MODEL')
+predict(fitFull, newdata = newData, interval = 'confidence')
+print('REDUCED MODEL')
+predict(fitRed, newdata = newData, interval = 'confidence')
+
+
+
+```
+
+
+4. **Obtain prediction intervals for the log-brain size of the new species above, using the `interval = "prediction"` argument in the `predict()` function.**
+
+```{r}
+   
+print('FULL MODEL')
+predict(fitFull, newdata = newData, interval = 'prediction')
+print('REDUCED MODEL')
+predict(fitRed, newdata = newData, interval = 'prediction')
+
+
+```
+
+
+5. **Compare the reduced model to the full model using the AIC and BIC measures.**
+
+```{r}
+
+anova(fitFull, fitRed) #ANOVA SHOWS SIGNIFICANT DIFFERENCE
+
+AIC(fitFull,fitRed)
+BIC(fitFull,fitRed)
+   
+```
+
+
+## In both AIC and BIC the **full model** is superior and has a lower value than the reduced model.
