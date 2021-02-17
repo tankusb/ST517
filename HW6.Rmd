@@ -1,0 +1,144 @@
+---
+title: "HW6"
+author: "Ben Tankus"
+date: "2/12/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+
+library(Amelia)
+library(broom)
+library(faraway)
+library(ggplot2)
+library(tidyverse)
+
+```
+
+
+
+1. (Adapted from Exercise #3 in Chapter 13 of Linear Models in R by J. Faraway.) The pima dataset
+contains information on 768 adult female Pima Indians living near Phoenix.
+
+(a) (2 points) It has been suggested that the zeros in diastolic, glucose, triceps, insulin and bmi
+are actually missing values. Replace these zeros with NAs and describe (quantitatively, visually, and
+in words) the distribution of missing values in the data.
+
+```{r}
+library(faraway)
+?pima
+df <- pima
+#df[ == 0] <- NA
+dfResponse <- df[, c('pregnant', 'diabetes', 'test', 'age')]
+dfReplaceNulls <-  df[, c('diastolic', 'glucose', 'triceps', 'insulin',  'bmi')]
+
+dfReplaceNulls[dfReplaceNulls == 0] <- NA
+
+dfNulls <- cbind(dfReplaceNulls, dfResponse)
+
+head(dfNulls)
+
+# By Diabetes
+dfNulls_long <- gather(dfNulls, variable, value, -diabetes)
+
+qplot(diabetes, variable, data = dfNulls_long, geom = "tile", 
+  fill = is.na(value)) +
+  scale_fill_manual("missing?", 
+  values = c(`TRUE` = "black", `FALSE` = "white")) +
+  theme(axis.text.x = element_text(angle = 0))
+
+
+
+sapply(dfNulls, function(x) sum(is.na(x)))
+
+```
+## It looks as diabetes pedigree increases it is less likely to have missing values in insulin concentration, tricep fold thickness, and diastolic pressure. 
+
+There are 652 values missing, 35, 5, 227, 374, and 11 from diastolic, glucose, triceps, insulin, and BMI respectively.
+
+
+(b) (1 point) Suggest, in the context of the study, a mechanism such that the missing values in diastolic might be considered missing completely at random.
+
+## One mechanisim for missingness completely at random would be the diastolic measurement tool losing the ability to record at random times.
+
+
+
+(c) (1 point) Suggest, in the context of the study, another mechanism such that the missing values in diastolic might be considered missing not at random.
+
+## Mising diastolic not at random would occur when the measurement device has a recording error at diastolic values over a certain threshold value.
+
+
+
+(d) (2 points) Fit a linear model with diastolic as the response and the other variables as predictors. Summarize the fit.
+
+```{r}
+
+fit <- lm(diastolic ~ . , data = dfNulls)
+
+summary(fit)
+
+
+```
+
+
+(e) (2 points) Use mean value imputation for the missing values, and refit the model. Compare the resulting estimates to the estimates from the previous fit: are the coefficient estimates similar, or do they differ substantially?
+
+```{r}
+#copy df
+dfMeanImputation <- dfNulls 
+
+#get col means / names
+dfMeans <- colMeans(dfMeanImputation, na.rm = T)
+names <- colnames(dfMeanImputation)
+
+# replace nulls with column means
+i <- 1
+for (e in names){
+  
+  dfMeanImputation[e][is.na(dfMeanImputation[e])] <- mean(dfMeans[i], na.rm = TRUE)
+  i <- i + 1
+
+}
+
+# REFIT MODEL
+
+fitMeanImputation <- lm(diastolic ~ . , data = dfMeanImputation)
+
+summary(fitMeanImputation)
+
+
+```
+## The estimates compared to the null-excluded model are mostly higher, but very similar. The biggest difference is the standard error is lower because there are 760 degrees of freedom compared to 384. This comes from the ~650 null values replaced by mean values.
+
+
+
+(f) (2 points) Use multiple imputation to handle missing values and fit the same model again. Compare the resulting estimates to the estimates from the previous two models (with no imputation, and with mean imputation): are the coefficient estimates similar, or do they differ substantially?
+
+```{r}
+
+set.seed(123)
+
+n.imp <- 25 # Set the number of imputed datasets
+chimp <- amelia(dfNulls, m=n.imp, p2s=0)
+
+
+betas <- matrix(0, nrow=n.imp, ncol=9)
+ses <- matrix(0, nrow=n.imp, ncol=9)
+
+
+for(i in 1:n.imp){
+  newMod <- lm(diastolic ~ . , data=chimp$imputations[[i]])
+  betas[i,] <- coef(newMod)
+  ses[i,] <- coef(summary(newMod))[,2]
+}
+
+
+mi.meld(q=betas, se=ses)
+
+
+```
+
+## The coefficients between the mean-replacement model and the linear regression-replacement model are similar, but both the coefficients and standard error are lower in the linear regression model. This suggests that the data has outliers in the higher values, and drags up the mean value for each column.

@@ -27,7 +27,8 @@ In Lecture 2 of this Module, we considered modeling all four variables on the lo
 fitFull <- lm(log(Brain) ~ log(Body) + log(Gestation) + log(Litter), data = case0902)
 fitRed <- lm(log(Brain) ~ log(Body), data = case0902)
 
-
+#summary(fitFull)
+#summary(fitRed)
 ```
 
 Now suppose we have four new species, with the following values of Body, Gestation, and Litter:
@@ -91,7 +92,7 @@ predict(fitRed, newdata = newData, interval = 'prediction')
 
 anova(fitFull, fitRed) #ANOVA SHOWS SIGNIFICANT DIFFERENCE
 
-AIC(fitFull,fitRed)
+AIC(fitFull,fitRed) #AOC
 BIC(fitFull,fitRed)
    
 ```

@@ -1,0 +1,164 @@
+---
+title: "HW5"
+author: "Ben Tankus"
+date: "2/4/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(broom)
+library(ggplot2)
+library(MASS)
+library(Sleuth3)
+```
+
+
+
+```{r}
+df = data.frame(case1002)
+
+#head(df)
+```
+
+Recall the Lab 5 data and models:
+Model 1: Both birds and non-echolocating bats have possibly different energy costs in flight to echolocating bats, after accounting for a linear relationship between log energy and log mass,
+
+$$log(Energy_i) = \beta_0 + \beta_1 log(Mass_i) + \beta_2non-ebat_i + \beta_3bird_i + \epsilon_i$$
+
+Model 2: The energy costs for non-echolocating bats and echolocating bats is the same, but possibly
+different to birds, after accounting for a linear relationship between log energy and log mass,
+
+$$log(Energy_i) = \beta_0 + \beta_1log(Mass_i) + \beta_3bird_i + \epsilon_i$$
+
+(a) (2 points) Use these two models to demonstrate that the Extra Sum of Squares F-test comparing models that only differ by one parameter is equivalent to a t-test of that parameter, and that the F-statistic is the t-statistic squared.
+
+```{r}
+mod1 <- lm(log(Energy) ~ log(Mass)+ factor(Type) , data = df)
+mod2 <- lm(log(Energy) ~ log(Mass)+ (Type == "non-echolocating birds") , data = df)
+
+anova(mod1,mod2)
+
+
+print("Mod 2 Summary")
+summary(mod1)
+print(0.38^2)
+```
+
+## The pvalue for type non-echolocating bats (mismatch term) is 0.703 which is identical to the model comparison pvalue, meaning they are equivilent tests. The t-statistic is magnitude 0.388, which is mathematically similar to the square root of the fstatistic 0.387.
+
+
+(b) (2 points) Consider these two model specified in R’s lm() notation:
+  lm(log(Energy) ~ log(Mass), data = case1002)
+  lm(log(Energy) ~ log(Mass) + Type, data = case1002)
+Describe in non-technical terms, (i.e. to someone who doesn’t use R), why these two models, that look like they only differ by one parameter, cannot be compared with a single t-test.
+
+## These cannot be compared with a single t-test because when we include the 'Type' variable we are including more than one additional variable. While these two models are nested, the two models can only be compared if they are nested *and* only differ by one parameter.
+
+
+2. (6 points) Consider the data ex1014 in the Sleuth3 package. The data describes an experiment in which researchers randomly allocated 25 beakers containing minnow larvae to treatment combinations of zinc and copper. After four days, the minnows in each beaker were measured for their protein levels.
+
+
+(a) Create a plot of protein against zinc, with points colored by the level of copper, and a plot of protein against copper, with points colored by the level of zinc. Describe any relationships you see.
+
+```{r}
+
+
+head(ex1014)
+
+qplot(Zinc, Protein ,color = Copper, size = 2  ,data = ex1014)
+qplot(Copper, Protein, color = Zinc, size = 2  ,data = ex1014)
+qplot(Zinc, Copper  ,data = ex1014)
+
+
+```
+
+## It looks like there is **no clear relationship between protein and copper.** Protien and Zinc looks like a **negative relationship.** There is no clear relationship between copper and zinc.
+
+
+(b) Fit a model for protein that includes both main and interaction terms for Zinc and Copper. Examine the residual plots and comment on the validity of the assumptions.
+
+```{r}
+
+modPro <- lm(Protein ~ Zinc + Copper + (Zinc : Copper), data = ex1014)
+summary(modPro)
+
+aug.ModPro <- augment(modPro)
+
+(aug.ModPro)
+
+qplot(.fitted, .resid, data = aug.ModPro) + geom_hline(yintercept = 0)
+
+```
+
+## Residual plot is clear of any assumption violations. There is one outlier point, but the leverage of said point is not outside of the normal range in comparison to the other points.
+
+(c) Fit a model for log protein that includes both main and interaction terms for Zinc and Copper. Examine the residual plots and comment on the validity of the assumptions. Is there evidence the model on the log scale better satisfies the assumptions?
+
+
+```{r}
+
+modLogPro <- lm(log(Protein) ~ Zinc + Copper + (Zinc:Copper), data = ex1014)
+summary(modLogPro)
+
+aug.ModLogPro <- fortify(modLogPro)
+head(aug.ModLogPro)
+
+qplot(.fitted, .resid, data = aug.ModLogPro) + geom_hline(yintercept = 0) # WHAT IS STD.RESID VS RES?
+
+
+AIC(modLogPro, modPro)
+BIC(modLogPro, modPro)
+
+
+```
+## It looks as though the assumptions are not violated in either model. Both residual plots have a similar shape, but the log plot has a much smaller y-axis. This artificially deflates the AIC and BIC values so we can't really say with confidence one way or another which model is better. It's not an apples-to-apples comparison.
+
+
+(d) Conduct a test for the interaction term in the model in (b). Make sure you include completely specify your model, hypotheses, test statistic and p-value. Write a short non-technical summary based on your result in the context of the study.
+
+
+## Model:
+$$protein = \beta_0 + \beta_1Zinc + \beta_2Copper + \beta_3 * (Zinc:Copper) $$
+
+## Hypothesis:
+$H_0:$ $$\beta_0 = 0, \beta_1 = 0, \beta_2 = 0, \beta3 = 0 $$ 
+$H_A:$ At least one of the $\beta$ values is not equal to zero 
+
+```{r}
+
+summary(modPro)
+
+```
+
+
+## Test statistic is 2.171, pvalue is 0.04153. This means we have strong statistical evidents to suggest that the $\beta_3$ iteraction term is non-zero. This means there is significant contribution to the model from the interaction of zinc and copper.
+
+(e) Produce mean protein levels, along with confidence intervals, for all combinations of Zinc and Copper based on the model in (b). Describe the effect of the interaction between Zinc and Copper on mean protein. (Hint: making a plot of these predictions might help).
+
+```{r}
+modpro.Aug <- augment(modPro)
+conf <- predict(modPro, interval = 'confidence')
+conf
+
+modpro.Aug['lower'] = conf[,2]
+modpro.Aug['upper'] = conf[,3]
+
+(modpro.Aug)
+
+qplot(x = unlist(modpro.Aug['Zinc']), y = unlist(modpro.Aug['.fitted']), color = unlist(modpro.Aug['Copper']))
+
+```
+## It looks as though in general, as the concentration of zinc and copper increase, the fitted value of protien decreases, as well as the variance between the fitted values. As the concentration of zinc increases, the interaction between zinc and copper matters less and less to the values of protien.
+
+(f) Try fitting a model where the levels of both Zinc and Copper are treated as categories, and include an interaction between the now categorical Zinc and Copper. Examine the model. Describe the problem with this model that prevents inference from proceeding
+
+```{r}
+
+mod2F <- lm(Protein ~ factor(Zinc) + factor(Copper) + (Zinc:Copper), data =  ex1014) 
+summary(mod2F)
+
+
+```
+
+## One cannot make inferences outside of the model has been trained on (our existing dataframe) because categorical values cannot mathemateically interpolate or extrapolate categorical data.
