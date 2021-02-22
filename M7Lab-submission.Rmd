@@ -35,7 +35,7 @@ plot(Resin_group)
 
 ```{r echo=TRUE}
 
-lmeFit <- lme(yield ~ factor(strength) , data = Resin_group, random = ~ 1 | tree)
+lmeFit <- lme(yield ~ as.factor(strength) , data = Resin_group, random = ~ 1 | tree)
 
 ```
 
