@@ -1,0 +1,147 @@
+---
+title: "HW8"
+author: "Ben Tankus"
+date: "2/23/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(boot)
+library(ISLR)
+library(leaps)
+library(ggplot2)
+```
+
+1. (2 points) (ISLR 2.4 Exercise #1, page 52) For each of the following parts, indicate whether we would
+generally expect the performance of a flexible statistical learning method to be better or worse than an
+inflexible method. Justify your answers.
+
+(a) The sample size n is extremely large, and the number of predictors p is small.
+
+## Flexile is usually better than inflexible: with the small number of predictors it's unlikely that we will have an overfitting senerio 
+
+(b) The number of predictors p is extremely large, and the number of observations n is small.
+
+## Flexible is usually WORSE than inflexible: With the "large p" the model already has a tendency to be too flexible with the many predictor variables.
+
+(c) The relationship between the predictors and response is highly non-linear.
+
+## 
+
+(d) The variance of the error terms, i.e., sigmasq = Var(epsilon), is extremely high.
+
+## Flexible is usually BETTER than inflexible: If the variance is high, the model should be flexible to accurately respond.
+
+
+
+2. (4 points) (ISLR 5.4 Exercise #8, page 201) We will now perform cross-validation on a simulated dataset.
+
+(a) Generate a simulated data set as follows:
+
+```{r}
+set.seed(1)
+x <- rnorm(100)
+y <- x - 2*x^2 + rnorm(100)
+df = data.frame(x,y)
+```
+
+In this data set, what is n and what is p? Write out the model used to generate the data in equation
+form.
+
+## In this model n is 100 and p is 1 (x)
+$$ y = \beta_0 + \beta_1x + \epsilon $$
+
+(b) Create a scatter plot of X against Y using the data you generated above. Comment on what you
+see.
+
+```{r}
+
+plot(x, y)
+
+
+```
+## It looks like there is a clear negative, non-linear relationship between x and y.
+
+(c) Set a random seed, and then compute the leave-one-out cross-validation (LOOCV) errors that result
+from fitting the following four models using least squares:
+
+- Y = beta0 + beta1X + epsilon
+- Y = beta0 + beta1X + beta2X2 + epsilon
+- Y = beta0 + beta1X + beta2X2 + beta3X3 + epsilon
+- Y = beta0 + beta1X + beta2X2 + beta3X3 + beta4X4 + epsilon  
+
+Note that you may find it helpful to use the data.frame() function to create a single data set
+containing both X and Y .
+
+
+```{r}
+set.seed(1)
+
+cv.error <- rep(0,4)
+
+for(i in 1:4){
+  glm.fit <- glm(y ~ poly(x, i), data= df)
+  cv.error[i] <- cv.glm(df, glm.fit)$delta[1]
+}
+#fit1 <- glm(y~x, data= df)
+#fit2 <- 
+#fit3 <- glm(y ~ poly(x, 3), data= df)
+#fit3 <- glm(y ~ poly(x, 4), data= df)
+
+cv.error
+
+
+```
+## There is a large drop in MSE values from a linear model (7.29) to the second order polynomial model (0.937). From this drop, I can reccomend fitting this data using the second order polynomial of X Y = beta0 + beta1X + beta2X2 + epsilon.
+
+
+(d) Repeat (c) using another random seed, and report your results. Are your results the same as what
+you got in (c)? Why or why not?
+
+```{r}
+set.seed(2)
+x2 <- rnorm(100)
+y2 <- x2 - 2*x2^2 + rnorm(100)
+df2 = data.frame(x2,y2)
+
+cv.error <- rep(0,4)
+
+for(i in 1:4){
+  glm.fit <- glm(y2 ~ poly(x2, i), data= df2)
+  cv.error[i] <- cv.glm(df2, glm.fit)$delta[1]
+}
+
+cv.error
+
+
+```
+
+## The MSE values are different but the pattern remains the same. This is because the transformations from X to Y is what creates the relationship between X and Y, not the values themselves. The second order polynomial of X Y = beta0 + beta1X + beta2X2 + epsilon is still the model with the best MSE.
+
+
+(e) Which of the models in (c) had the smallest LOOCV error? Is this what you expected? Explain
+your answer.
+
+(f) Comment on the statistical significance of the coefficient estimates that results from fitting each of
+the models in (c) using least squares. Do these results agree with the conclusions drawn based on
+the cross-validation results?
+
+3. (4 points) (Based on ISLR 6.8 Exercise #11, page 264 — Predicting crime rates in Boston data.)
+The Boston data set is in the MASS package, you’ll need to load that first.
+
+```{r}
+library(MASS)
+?Boston
+head(Boston)
+
+```
+
+Your job is to build a regression model to predict the crime rate (crim) in Boston suburbs based on the
+other provided variables.
+Your solution should include:
+• A brief exploratory analysis (some summary statistics, and a few plots of any obvious relationships).
+• A description of the set of regression models you considered.
+• A description of how the models were evaluated.
+• A summary of one (or a few) models that based on your analysis are the best among those you
+considered.
