@@ -11,6 +11,9 @@ library(boot)
 library(ISLR)
 library(leaps)
 library(ggplot2)
+library('corrplot')
+library('reshape2')
+
 ```
 
 1. (2 points) (ISLR 2.4 Exercise #1, page 52) For each of the following parts, indicate whether we would
@@ -19,19 +22,19 @@ inflexible method. Justify your answers.
 
 (a) The sample size n is extremely large, and the number of predictors p is small.
 
-## Flexile is usually better than inflexible: with the small number of predictors it's unlikely that we will have an overfitting senerio 
+## Flexile is usually BETTER than inflexible: with the small number of predictors it's unlikely that we will have an overfitting senerio 
 
 (b) The number of predictors p is extremely large, and the number of observations n is small.
 
-## Flexible is usually WORSE than inflexible: With the "large p" the model already has a tendency to be too flexible with the many predictor variables.
+## Flexible is usually WORSE than inflexible: With the high-dimentional "large p" the model already has a tendency to be too flexible with the many predictor variables, and overfit.
 
 (c) The relationship between the predictors and response is highly non-linear.
 
-## 
+## Flexibile is usually BETTER than inflexible: If the relationship is non-linear, a model will have to be flexible to fit the data, not linear.
 
 (d) The variance of the error terms, i.e., sigmasq = Var(epsilon), is extremely high.
 
-## Flexible is usually BETTER than inflexible: If the variance is high, the model should be flexible to accurately respond.
+## Flexible is usually WORSE than inflexible: If the variance is high, the model should be flexible to accurately respond.
 
 
 
@@ -44,20 +47,25 @@ set.seed(1)
 x <- rnorm(100)
 y <- x - 2*x^2 + rnorm(100)
 df = data.frame(x,y)
+
+df['x2'] <- df['x']^2
+df['x3'] <- df['x']^3
+df['x4'] <- df['x']^4
+
 ```
 
 In this data set, what is n and what is p? Write out the model used to generate the data in equation
 form.
 
-## In this model n is 100 and p is 1 (x)
-$$ y = \beta_0 + \beta_1x + \epsilon $$
+## In this model n is 100 and p is 2 (x and $x^2$)
+$$ y = \beta_0 + \beta_1x + \beta_2x^2 +  \epsilon $$
 
 (b) Create a scatter plot of X against Y using the data you generated above. Comment on what you
 see.
 
 ```{r}
 
-plot(x, y)
+qplot(x, y)
 
 
 ```
@@ -67,9 +75,13 @@ plot(x, y)
 from fitting the following four models using least squares:
 
 - Y = beta0 + beta1X + epsilon
+Error is 7.2881616 
 - Y = beta0 + beta1X + beta2X2 + epsilon
+Error is 0.9374236 
 - Y = beta0 + beta1X + beta2X2 + beta3X3 + epsilon
+Error is 0.9566218 
 - Y = beta0 + beta1X + beta2X2 + beta3X3 + beta4X4 + epsilon  
+Error is 0.9539049
 
 Note that you may find it helpful to use the data.frame() function to create a single data set
 containing both X and Y .
@@ -81,14 +93,10 @@ set.seed(1)
 cv.error <- rep(0,4)
 
 for(i in 1:4){
-  glm.fit <- glm(y ~ poly(x, i), data= df)
-  cv.error[i] <- cv.glm(df, glm.fit)$delta[1]
+  print(i)
+  glm.fit <- glm(y ~ ., data= df[,1:(i+1)])
+  cv.error[i] <- cv.glm(df[,1:(i+1)], glm.fit)$delta[1]
 }
-#fit1 <- glm(y~x, data= df)
-#fit2 <- 
-#fit3 <- glm(y ~ poly(x, 3), data= df)
-#fit3 <- glm(y ~ poly(x, 4), data= df)
-
 cv.error
 
 
@@ -96,20 +104,22 @@ cv.error
 ## There is a large drop in MSE values from a linear model (7.29) to the second order polynomial model (0.937). From this drop, I can reccomend fitting this data using the second order polynomial of X Y = beta0 + beta1X + beta2X2 + epsilon.
 
 
-(d) Repeat (c) using another random seed, and report your results. Are your results the same as what
-you got in (c)? Why or why not?
+(d) Repeat (c) using another random seed, and report your results. Are your results the same as what you got in (c)? Why or why not?
 
 ```{r}
 set.seed(2)
-x2 <- rnorm(100)
-y2 <- x2 - 2*x2^2 + rnorm(100)
-df2 = data.frame(x2,y2)
-
+x.d <- rnorm(100)
+y.d <- x.d - 2*x.d^2 + rnorm(100)
+df.d = data.frame(x.d,y.d)
+df.d['x2.d'] <- df.d['x.d']^2
+df.d['x3.d'] <- df.d['x.d']^3
+df.d['x4.d'] <- df.d['x.d']^4
 cv.error <- rep(0,4)
 
 for(i in 1:4){
-  glm.fit <- glm(y2 ~ poly(x2, i), data= df2)
-  cv.error[i] <- cv.glm(df2, glm.fit)$delta[1]
+  print(i)
+  glm.fit <- glm(y.d ~ ., data= df.d[,1:(i+1)])
+  cv.error[i] <- cv.glm(df.d[,1:(i+1)], glm.fit)$delta[1]
 }
 
 cv.error
@@ -117,15 +127,27 @@ cv.error
 
 ```
 
-## The MSE values are different but the pattern remains the same. This is because the transformations from X to Y is what creates the relationship between X and Y, not the values themselves. The second order polynomial of X Y = beta0 + beta1X + beta2X2 + epsilon is still the model with the best MSE.
+## The MSE values are different but the best model pattern remains the same (second order model). This is because the transformations from X to Y is what creates the relationship between X and Y, not the values themselves. The second order polynomial of X Y = beta0 + beta1X + beta2X2 + epsilon is still the model with the best MSE.
 
 
 (e) Which of the models in (c) had the smallest LOOCV error? Is this what you expected? Explain
 your answer.
 
-(f) Comment on the statistical significance of the coefficient estimates that results from fitting each of
-the models in (c) using least squares. Do these results agree with the conclusions drawn based on
-the cross-validation results?
+## The second model *Y = beta0 + beta1X + beta2X2 + epsilon* has the lowest LOOCV error. This is what I expected because there is a clear second order polynomial shape to the data.This matches the second order equation selected.
+
+
+(f) Comment on the statistical significance of the coefficient estimates that results from fitting each of the models in (c) using least squares. Do these results agree with the conclusions drawn based on the cross-validation results?
+
+
+```{r}
+
+summary(glm.fit)
+
+```
+
+
+## The coefficients of x and x^2 in the model are both statistically significantly different from zero, while x^3 and x^4 are not. This aligns with the crossvalidation method suggesting the p = 2 model to be best.
+
 
 3. (4 points) (Based on ISLR 6.8 Exercise #11, page 264 — Predicting crime rates in Boston data.)
 The Boston data set is in the MASS package, you’ll need to load that first.
@@ -137,11 +159,169 @@ head(Boston)
 
 ```
 
-Your job is to build a regression model to predict the crime rate (crim) in Boston suburbs based on the
-other provided variables.
+Your job is to build a regression model to predict the crime rate (crim) in Boston suburbs based on the other provided variables.
+
 Your solution should include:
-• A brief exploratory analysis (some summary statistics, and a few plots of any obvious relationships).
-• A description of the set of regression models you considered.
-• A description of how the models were evaluated.
-• A summary of one (or a few) models that based on your analysis are the best among those you
+- A brief exploratory analysis (some summary statistics, and a few plots of any obvious relationships).
+- A description of the set of regression models you considered.
+- A description of how the models were evaluated.
+- A summary of one (or a few) models that based on your analysis are the best among those you
 considered.
+
+```{r echo = TRUE}
+summary(Boston)
+dev.new(width = 100, height = 100, unit = "in")
+
+plot(Boston)
+
+
+boxplot(x = as.list(as.data.frame(Boston)), las = 2, main = 'All columns')
+boxplot(x = as.list(as.data.frame(Boston[,-c(4,5,6,7,10,12)])), las = 2, main = 'Extra small and Extra Large columns removed')
+
+
+# Check corelation
+corBucket <- round(cor(Boston),3)
+
+
+# Get lower triangle of the correlation matrix
+  get_lower_tri<-function(corBucket){
+    corBucket[upper.tri(corBucket)] <- NA
+    return(corBucket)
+  }
+  # Get upper triangle of the correlation matrix
+  get_upper_tri <- function(corBucket){
+    corBucket[lower.tri(corBucket)]<- NA
+    return(corBucket)
+  }
+  
+upper_tri <- get_upper_tri(corBucket)
+
+melted_cormat <- melt(upper_tri, na.rm = TRUE)
+
+ggplot(data = melted_cormat, aes(x=Var1, y=Var2, fill = value)) +
+  geom_tile() + 
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = 'red', high = "green", mid = 'white', midpoint = 0, limit = c(-1,1), space = 'Lab', name = 'Pearson\nCorrelation') + 
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, size = 8))
+
+qplot(rad, crim, data = Boston, main = 'Rad vs Crim')
+qplot(dis, crim, data = Boston, main = 'Dis vs Crim')
+qplot(medv, crim, data = Boston, main = 'Medv vs Crim')
+
+
+
+```
+## It looks like the tax and black columns are much higher than the others, and crime, zoned lots, age, and median value all have sizable skew to their distributions. Many columns also have strong multi-colinearity such as distance to employment centers on non-retail business acres, nitrogen oxides, and age as well as tax on accessibility to radial highways. It also looks as though the charles river dummy variable is not related to any metric. I analysed a few specific promising metric's scatter plots below.
+
+## Rad vs crime shows that there is a small amount of crime in the early indexes, but as the scale increases there is a huge jump in crime around 24.
+
+## Dis vs crime shows that as the distance to the employment centers decreases the crime increases. 
+
+## Medv vs crime shows as the median value of the homes increases, the crime decreases.
+
+```{r}
+# Regression: Best Subset Method
+regfit.full <- regsubsets(crim ~ . , data = Boston, nvmax = 100)
+reg.summary <- summary(regfit.full)
+
+names(reg.summary)
+plot(reg.summary$rss, main = 'Residual Sum of Squares')
+plot(reg.summary$bic, main = 'BIC')
+plot(reg.summary$adjr2, main = 'Adjusted R Squared')
+plot(reg.summary$cp, main = 'CP')
+
+coef(regfit.full, 7)
+
+summary(regfit.full)
+
+```
+
+## Using the Best Subset method the Adjusted r^2 is best at 9, BIC at 3, RSS at 13, and Cp at 8. Looking at the graphs, **7** is the best tradeoff of the 4 metrics. This shows zn, nox, dis, rad, ptratio, black, and medv as significant factors 
+
+
+```{r}
+#Forwards Stepwise Selection
+regfit.fwd <- regsubsets(crim ~ . , data = Boston, nvmax = 100, method = 'forward')
+reg.fwd.summary <- summary(regfit.fwd)
+
+names(reg.fwd.summary)
+plot(reg.fwd.summary$rss, main = 'Residual Sum of Squares')
+plot(reg.fwd.summary$bic, main = 'BIC')
+plot(reg.fwd.summary$adjr2, main = 'Adjusted R Squared')
+plot(reg.fwd.summary$cp, main = 'CP')
+
+coef(regfit.fwd, 7)
+
+summary(regfit.fwd)
+
+
+
+```
+## The forwards model has the best RSS value at 13, BIC at 3, Adjusted R-squared at 9, and CP at 8. This matches the full model with the best model at 7 factors, zn, nox, dis, lsat, rad, black, and medv
+
+
+```{r backwards}
+#Backwards Stepwise Selection
+regfit.bwd <- regsubsets(crim ~ . , data = Boston, nvmax = 100, method = 'backward')
+reg.bwd.summary <- summary(regfit.bwd)
+
+names(reg.bwd.summary)
+plot(reg.bwd.summary$rss, main = 'Residual Sum of Squares')
+plot(reg.bwd.summary$bic, main = 'BIC')
+plot(reg.bwd.summary$adjr2, main = 'Adjusted R Squared')
+plot(reg.bwd.summary$cp, main = 'CP')
+
+coef(regfit.bwd, 7)
+
+summary(regfit.bwd)
+
+
+
+```
+## The backwards model has the best RSS value at 13, BIC at 4, Adjusted R-squared at 9, and CP at 8. This matches the full model with the best model at 7 factors, zn, nox, dis, rad, ptratio, black, and medv
+
+
+
+```{r exhaustive}
+#exhaustive Stepwise Selection
+regfit.ex <- regsubsets(crim ~ . , data = Boston, nvmax = 100, method = 'exhaustive')
+reg.ex.summary <- summary(regfit.ex)
+
+names(reg.ex.summary)
+plot(reg.ex.summary$rss, main = 'Residual Sum of Squares')
+plot(reg.ex.summary$bic, main = 'BIC')
+plot(reg.ex.summary$adjr2, main = 'Adjusted R Squared')
+plot(reg.ex.summary$cp, main = 'CP')
+
+coef(regfit.ex, 7)
+
+summary(regfit.ex)
+```
+## The exhaustive model has the best RSS value at 13, BIC at 3, Adjusted R-squared at 9, and CP at 8. This matches the full model with the best model at 7 factors, zn, nox, dis, rad, ptratio, black, and medv
+
+
+```{r crossvalidation}
+set.seed(1)
+train <- sample(c(TRUE, FALSE), nrow(Boston), replace = TRUE)
+test <- (!train)
+
+regfit.best = regsubsets(crim ~ . , data = Boston[train,], nvmax = 13)
+
+test.mat <- model.matrix(crim ~., data = Boston[test,])
+
+val.errors <- rep(NA,13)
+
+for(i in 1:13){
+  coefi <- coef(regfit.best, id=i)
+  pred <- test.mat[,names(coefi)] %*% coefi
+  val.errors[i] <- mean((Boston$crim[test]-pred)^2)
+}
+plot(val.errors)
+
+coef(regfit.best,which.min(val.errors))
+
+
+```
+
+## Using cross-validation it looks as though the best model is at 9, with similar values at 7, 8, and 10 with coefficients of zn, indus, nox, dis, rad, ptratio, black, lstat, and medv. I reccomend choosing the 8 (zn, indus, nox, dis, rad, ptratio, lstat, and medv) variable model as a happy medium between the cross-validation 9, and forward & backwards model of 7. 

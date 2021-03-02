@@ -82,14 +82,14 @@ lab8.cv.err2 <- cv.glm(lab8Data, fitGLM2)
 fitGLMFull <- glm(Y ~ . , data= lab8Data)
 lab8.cv.errFull <- cv.glm(lab8Data, fitGLMFull)
 
-print('With W term')
+print('With W term (3 predictor):')
 lab8.cv.err$delta
 
 
-print('Only x terms:')
+print('Only x terms (True model):')
 lab8.cv.err2$delta
 
-print('Full model:')
+print('Full model (Xs and Ws):')
 lab8.cv.errFull$delta
 ```
 ## The delta variables are very similar and are identical up to two decimal places between the best predictor model and the true model. 

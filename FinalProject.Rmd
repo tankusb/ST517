@@ -1,0 +1,41 @@
+---
+title: "FinalProject"
+author: "Ben Tankus"
+date: "3/2/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Initialize}
+df <- read.csv('OR_acs_house_occ.csv')
+
+```
+
+# QUESTIONS TO ANSWER:
+
+1. Do people living in apartments pay less on electricity than those living in houses? (adjust for number of bedrooms and number of occupants)
+2. How much does each group pay? 
+
+
+
+# MISSINGNESS
+
+## ACR and VALP both have many null values, 2586 and 4632 respectively. Analysis in the *TBD* section will determine how the missingness is distributed.
+
+```{r EXPLORE DATA}
+i = 1
+names <- names(df)
+  
+for( col in df) {
+  #print(paste(col.names(), sum(is.na(col))))
+  print(paste(names[i], "Has", sum(is.na(col)), "nulls"))
+  i <- i + 1
+}
+
+```
+
+
+# 
