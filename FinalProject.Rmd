@@ -7,6 +7,15 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(Amelia)
+library(broom)
+library(faraway)
+library(ggplot2)
+library(dplyr)
+library(pairsD3)
+library(tidyverse)
+
 ```
 
 ```{r Initialize}
@@ -18,14 +27,16 @@ df <- read.csv('OR_acs_house_occ.csv')
 
 1. Do people living in apartments pay less on electricity than those living in houses? (adjust for number of bedrooms and number of occupants)
 2. How much does each group pay? 
+3. What about extra heating cost using fuel or gas?
 
+# CREATE MODEL
+Model is used to predict electricity costs for a house in Oregon
 
+## MISSINGNESS
 
-# MISSINGNESS
+### ACR and VALP both have many null values, 2586 and 4632 respectively. Analysis in the *TBD* section will determine how the missingness is distributed.
 
-## ACR and VALP both have many null values, 2586 and 4632 respectively. Analysis in the *TBD* section will determine how the missingness is distributed.
-
-```{r EXPLORE DATA}
+```{r MISSINGNESS}
 i = 1
 names <- names(df)
   
@@ -35,7 +46,237 @@ for( col in df) {
   i <- i + 1
 }
 
+
+
+dfNulls <- df[, c('ACR','ELEP', 'VALP')]
+
+dfNulls_long <- gather(dfNulls, variable, value, -ELEP)
+
+
+qplot(ELEP, variable, data = dfNulls_long, geom = "tile",
+fill = is.na(value)) +
+scale_fill_manual("missing?",
+values = c('TRUE' = "black", 'FALSE' = "white")) +
+theme(axis.text.x = element_text(angle = 0))
+
+
+VALPNullsHist.df <- subset(df[,c('VALP', 'ELEP')], is.na(VALP) == TRUE) 
+hist(VALPNullsHist.df[,'ELEP'], main = 'VALP Missingness Histogram', xlab = 'ELEP')
+
+VALPNoNullsHist.df <- subset(df[,c('VALP', 'ELEP')], is.na(VALP) == FALSE) 
+qplot(VALPNoNullsHist.df[,'VALP'], VALPNoNullsHist.df[,'ELEP'], main = 'VALP VS ELEP Scatter', ylab = 'ELEP', xlab = 'VALP')
+
+
+
+ACRNullsHist.df <- subset(df[,c('ACR', 'ELEP')], is.na(ACR) == TRUE) 
+hist(ACRNullsHist.df[,'ELEP'], main = 'ACR Missingness Histogram', xlab = 'ELEP')
+ACRNoNullsHist.df <- subset(df[,c('ACR', 'ELEP')], is.na(ACR) == FALSE) 
+qplot(as.numeric(factor(ACRNoNullsHist.df[,'ACR'])), ACRNoNullsHist.df[,'ELEP'], main = 'ACR VS ELEP Scatter', ylab = 'ELEP', xlab = 'ACR')
+
+```
+```{r}
+panel.hist <- function(x, ...) {
+  usr <- par("usr")
+  on.exit(par(usr))
+  par(usr = c(usr[1:2], 0, 1.5) )
+  h <- hist(x, plot = FALSE)
+  breaks <- h$breaks
+  nB <- length(breaks)
+  y <- h$counts
+  y <- y/max(y)
+  rect(breaks[-nB], 0, breaks[-1], y, col = "white", ...)
+}
+
+
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...) {
+  usr <- par("usr")
+  on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- abs(cor(x, y, use = "complete.obs"))
+  txt <- format(c(r, 0.123456789), digits = digits)[1]
+  txt <- paste(prefix, txt, sep = "")
+  if (missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt, cex =  cex.cor * (1 + r) / 2)
+}
+
 ```
 
 
-# 
+### Correlation check before dropping potentially practically irrelevant columns
+```{r CORR CHECK}
+
+df.corr <-df[,c('ELEP', 'NP', 'BDSP','BLD' ,'FULP', 'GASP', 'HFL', 'RMSP', 'TEN', 'YBL', 'R18', 'R60')]
+
+df.corr['BLD'] = as.numeric(factor(df.corr[,'BLD']))
+df.corr['HFL'] = as.numeric(factor(df.corr[,'HFL']))
+df.corr['TEN'] = as.numeric(factor(df.corr[,'TEN']))
+df.corr['YBL'] = as.numeric(factor(df.corr[,'YBL']))
+df.corr['R18'] = as.numeric(factor(df.corr[,'R18']))
+df.corr['R60'] = as.numeric(factor(df.corr[,'R60']))
+
+
+
+#plot(df.corr)
+summary(df.corr)
+
+
+#pairs(df.corr, 
+#      main = "Anderson's Iris Data -- 3 species",
+#      pch = 21, 
+#      bg = c("#1b9e77", "#d95f02", "#7570b3"))#[unclass(df.corr$Species)])
+
+pdf(file = "pairsplot.pdf")
+pairs(
+  df.corr,
+  upper.panel = panel.cor,
+  diag.panel  = panel.hist,
+  lower.panel = panel.smooth,
+  gap = 1/5,
+  pch = 20 #small dots
+)
+dev.off()
+
+#shinypairs(df.corr)
+#pairsD3(df.corr[,c(1,2,3,4,5)], opacity = 0.9, cex = 4, width = 600 )
+
+#DECLARE FINAL RELEVANT DF
+df.relevant <- df[,c('ELEP', 'FULP', 'GASP', 'YBL', 'BLD', 'HFL', 'RMSP', 'NP')]
+head(df.relevant)
+```
+
+
+### CLEANING FINAL COLUMN CHOICES
+``` {r FILTER FOR HEAT TYPE}
+
+df.final <- df.relevant
+
+# Drop rows with "Mobile home or trailer
+df.final <- filter(df.final, BLD != 'Mobile home or trailer' & BLD != 'Boat, RV, van, etc.')
+
+# Transform BLD
+adjustVector <- c()
+i <- 1
+
+for (e in df.final[,'BLD'])
+{
+  
+  if (grepl('house' ,e, fixed = TRUE)){
+    adjustVector[i] <- "House"
+    i <- i+1
+    
+  } else 
+  {
+    adjustVector[i] <- "Apartment"
+    i <- i+1
+  }
+}
+df.final['BLDAdjusted'] = adjustVector
+
+
+# Transform HFL
+adjustVector <- c()
+i <- 1
+
+for (e in df.final[,'HFL'])
+{
+  
+  if (grepl('Electricity' ,e, fixed = TRUE)){
+    adjustVector[i] <- "Electricity"
+    i <- i+1
+    
+  } else 
+  {
+    adjustVector[i] <- "Not Electricity"
+    i <- i+1
+  }
+}
+df.final['HFLAdjusted'] = adjustVector
+
+
+# TRANSFORM YBL
+adjustVector <- c()
+i <- 1
+
+for (e in df.final[,'YBL'])
+{
+  
+  if (e >= 2005){
+    adjustVector[i] <- "2005 to 2015"
+    i <- i+1
+    
+  } else 
+  {
+    adjustVector[i] <- e
+    i <- i+1
+  }
+}
+df.final['YBLAdjusted'] = adjustVector
+
+
+
+
+
+
+
+```
+
+
+
+
+## EXPLORE DATA
+
+
+```{r EXPLORE DATA}
+
+# NO SIGNIFICANT VISUAL CORRELATION BETWEEN COST AND NUMBER OF PERSONS
+plot(df$NP, df$ELEP, main = 'Number of Persons by Electricity Cost', xlab =  'Persons', ylab = 'Cost') 
+
+# NO SIGNIFICANT VISUAL CORRELATION BETWEEN COST AND GAS PRICS
+plot(df$GASP, df$ELEP, main = 'Gas Monthly Cost by Electricity Cost', xlab =  'Gas Cost', ylab = 'Cost') 
+
+# MAYBE CORRELATION
+plot(df$FULP, df$ELEP, main = 'Electricity Monthly Cost by Fuel Cost', xlab =  'Fuel Cost', ylab = 'Cost') 
+
+# MAYBE CORRELATION
+plot(df$BDSP, df$ELEP, main = 'Electricity Monthly Cost by Bedroom Count', xlab =  'Bedroom Count', ylab = 'Cost') 
+
+# MAYBE CORRELATION
+plot(df$HFL, df$ELEP, main = 'Electricity Monthly Cost by Bedroom Count', xlab =  'Bedroom Count', ylab = 'Cost') 
+
+
+
+```
+
+```{r FIT MODELS}
+
+# DECLARE HOUSE MODEL
+df.house <- filter(df.final, BLDAdjusted == 'House')
+fit.house <- lm(ELEP ~ factor(HFLAdjusted) + NP + RMSP - 1, data = df.house)
+summary(fit.house)
+
+# DECLARE APARTMENT MODEL
+df.apt <- filter(df.final, BLDAdjusted == 'Apartment')
+fit.apt <- lm(ELEP ~ factor(HFLAdjusted) + NP + RMSP - 1, data = df.apt)
+summary(fit.apt)
+
+apt.fitted <- summary(fit.apt$fitted.values)
+house.fitted <- summary(fit.house$fitted.values)
+
+apt.fitted
+house.fitted
+
+
+qplot(apt.fitted, geom = "boxplot", main = 'Apartment Boxplot', xlim = c(25,290), xlab = "Electricity Value")  +  theme(axis.text.y = element_blank())
+qplot(house.fitted, geom = "boxplot", main = 'House Boxplot', xlim = c(25,290)) +  theme(axis.text.y = element_blank())
+
+
+
+#str(fit.apt)
+
+
+#anova(fit.house, fit.apt)
+
+```
+
+
+
