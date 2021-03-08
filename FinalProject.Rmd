@@ -140,7 +140,7 @@ dev.off()
 #pairsD3(df.corr[,c(1,2,3,4,5)], opacity = 0.9, cex = 4, width = 600 )
 
 #DECLARE FINAL RELEVANT DF
-df.relevant <- df[,c('ELEP', 'FULP', 'GASP', 'YBL', 'BLD', 'HFL', 'RMSP', 'NP')]
+df.relevant <- df[,c('ELEP', 'FULP', 'GASP', 'YBL', 'BLD', 'HFL', 'BDSP', 'NP')]
 head(df.relevant)
 ```
 
@@ -251,12 +251,12 @@ plot(df$HFL, df$ELEP, main = 'Electricity Monthly Cost by Bedroom Count', xlab =
 
 # DECLARE HOUSE MODEL
 df.house <- filter(df.final, BLDAdjusted == 'House')
-fit.house <- lm(ELEP ~ factor(HFLAdjusted) + NP + RMSP - 1, data = df.house)
+fit.house <- lm(ELEP ~ factor(HFLAdjusted) + NP + BDSP - 1, data = df.house)
 summary(fit.house)
 
 # DECLARE APARTMENT MODEL
 df.apt <- filter(df.final, BLDAdjusted == 'Apartment')
-fit.apt <- lm(ELEP ~ factor(HFLAdjusted) + NP + RMSP - 1, data = df.apt)
+fit.apt <- lm(ELEP ~ factor(HFLAdjusted) + NP + BDSP - 1, data = df.apt)
 summary(fit.apt)
 
 apt.fitted <- summary(fit.apt$fitted.values)
