@@ -15,6 +15,7 @@ library(ggplot2)
 library(dplyr)
 library(pairsD3)
 library(tidyverse)
+library(leaps)
 
 ```
 
@@ -116,16 +117,9 @@ df.corr['R60'] = as.numeric(factor(df.corr[,'R60']))
 
 
 
-#plot(df.corr)
+plot(df.corr)
 summary(df.corr)
 
-
-#pairs(df.corr, 
-#      main = "Anderson's Iris Data -- 3 species",
-#      pch = 21, 
-#      bg = c("#1b9e77", "#d95f02", "#7570b3"))#[unclass(df.corr$Species)])
-
-pdf(file = "pairsplot.pdf")
 pairs(
   df.corr,
   upper.panel = panel.cor,
@@ -134,10 +128,7 @@ pairs(
   gap = 1/5,
   pch = 20 #small dots
 )
-dev.off()
 
-#shinypairs(df.corr)
-#pairsD3(df.corr[,c(1,2,3,4,5)], opacity = 0.9, cex = 4, width = 600 )
 
 #DECLARE FINAL RELEVANT DF
 df.relevant <- df[,c('ELEP', 'FULP', 'GASP', 'YBL', 'BLD', 'HFL', 'BDSP', 'NP')]
@@ -229,6 +220,8 @@ df.final['YBLAdjusted'] = adjustVector
 ```{r EXPLORE DATA}
 
 # NO SIGNIFICANT VISUAL CORRELATION BETWEEN COST AND NUMBER OF PERSONS
+summary(df)
+
 plot(df$NP, df$ELEP, main = 'Number of Persons by Electricity Cost', xlab =  'Persons', ylab = 'Cost') 
 
 # NO SIGNIFICANT VISUAL CORRELATION BETWEEN COST AND GAS PRICS
@@ -240,43 +233,117 @@ plot(df$FULP, df$ELEP, main = 'Electricity Monthly Cost by Fuel Cost', xlab =  '
 # MAYBE CORRELATION
 plot(df$BDSP, df$ELEP, main = 'Electricity Monthly Cost by Bedroom Count', xlab =  'Bedroom Count', ylab = 'Cost') 
 
-# MAYBE CORRELATION
-plot(df$HFL, df$ELEP, main = 'Electricity Monthly Cost by Bedroom Count', xlab =  'Bedroom Count', ylab = 'Cost') 
-
 
 
 ```
+
+```{r VISUALIZE DATA}
+
+summary(df.final)
+
+
+```
+
 
 ```{r FIT MODELS}
 
 # DECLARE HOUSE MODEL
-df.house <- filter(df.final, BLDAdjusted == 'House')
-fit.house <- lm(ELEP ~ factor(HFLAdjusted) + NP + BDSP - 1, data = df.house)
-summary(fit.house)
+fit.basic <-  lm(ELEP ~ BLDAdjusted + NP + BDSP - 1, data = df.final)
 
-# DECLARE APARTMENT MODEL
-df.apt <- filter(df.final, BLDAdjusted == 'Apartment')
-fit.apt <- lm(ELEP ~ factor(HFLAdjusted) + NP + BDSP - 1, data = df.apt)
-summary(fit.apt)
+# Add HFL and compare
+fit.basic.HFL <-  lm(ELEP ~ BLDAdjusted + NP + BDSP - 1 + HFLAdjusted, data = df.final)
+anova(fit.basic, fit.basic.HFL) #SIGNIF DIFFERENCE, THEREFORE INCLUDE HFL
 
-apt.fitted <- summary(fit.apt$fitted.values)
-house.fitted <- summary(fit.house$fitted.values)
+# Add YBL and compare
+fit.basic.HFLYBL <-  lm(ELEP ~ BLDAdjusted + NP + BDSP - 1 + HFLAdjusted + factor(YBLAdjusted), data = df.final)
+anova(fit.basic.HFL, fit.basic.HFLYBL) # Lower RSS, therefore include YBL
 
-apt.fitted
-house.fitted
-
-
-qplot(apt.fitted, geom = "boxplot", main = 'Apartment Boxplot', xlim = c(25,290), xlab = "Electricity Value")  +  theme(axis.text.y = element_blank())
-qplot(house.fitted, geom = "boxplot", main = 'House Boxplot', xlim = c(25,290)) +  theme(axis.text.y = element_blank())
+# Add GASP and compare
+fit.basic.HFLYBLGASP <-  lm(ELEP ~ BLDAdjusted + NP + BDSP - 1 + HFLAdjusted + factor(YBLAdjusted) + GASP, data = df.final)
+anova(fit.basic.HFLYBL, fit.basic.HFLYBLGASP) # Lower but not by much, therefore DONT include FULP
 
 
+# Add FULP and compare
+fit.basic.HFLYBLFULP <-  lm(ELEP ~ BLDAdjusted + NP + BDSP - 1 + HFLAdjusted + factor(YBLAdjusted) + FULP, data = df.final)
+anova(fit.basic.HFLYBL, fit.basic.HFLYBLFULP) # Lower RSS therefore include FULP
 
-#str(fit.apt)
+fit.summ<- summary(fit.basic.HFLYBLFULP)
 
+round(fit.summ$coefficients,2)
+plot(fit.summ$residuals, main = 'Residuals for Question 1 Model')
+round(confint(fit.basic.HFLYBLFULP),2)
 
-#anova(fit.house, fit.apt)
+fit.summ
 
 ```
+
+
+# QUESTION 2
+
+
+## FORWARDS REGSPLIT METHOD
+```{r FORWARDS}
+#Forwards Stepwise Selection
+df.predict.house <- subset(df.final, BLDAdjusted == 'House', select = -c(BLDAdjusted, BLD, HFL, YBL))
+regfit.fwd <- regsubsets(ELEP ~ ., data=df.predict.house, nvmax=19, intercept = FALSE, method = 'forward')
+reg.fwd.summary <- summary(regfit.fwd)
+
+
+names(reg.fwd.summary)
+plot(reg.fwd.summary$rss, main = 'Residual Sum of Squares') #13 factors
+plot(reg.fwd.summary$bic, main = 'BIC') # 13 factors
+plot(reg.fwd.summary$adjr2, main = 'Adjusted R Squared') # 13 factors
+plot(reg.fwd.summary$cp, main = 'CP')# 13 factors
+
+df.coef <- round(data.frame(coef(regfit.fwd, 13)),2)
+
+reg.fwd.summary
+
+print(paste("RSS:", round(reg.fwd.summary$rss[13], 2)))
+print(paste("BIC:", round(reg.fwd.summary$bic[13], 2)))
+print(paste("Adjusted R Squared:", round(reg.fwd.summary$adjr2[13], 2)))
+print(paste("CP:", round(reg.fwd.summary$cp[12], 2)))
+
+regfit.fwd$ress
+```
+
+
+
+
+## EXHAUSTIVE REGSPLIT METHOD
+```{r EXHAUSTIVE}
+#Exhaustive stepwise selection
+regfit.ex <- regsubsets(ELEP ~., data = df.predict.house,  nvmax = 19, method = 'exhaustive', intercept = FALSE)
+reg.ex.summary <- summary(regfit.ex)
+
+names(reg.ex.summary)
+plot(reg.ex.summary$rss, main = 'Residual Sum of Squares') # Best at 13
+plot(reg.ex.summary$bic, main = 'BIC') # Best at 13
+plot(reg.ex.summary$adjr2, main = 'Adjusted R Squared') # Best at 13
+plot(reg.ex.summary$cp, main = 'CP') # Best at 13
+
+df.coef.ex <- round(data.frame(coef(regfit.ex, 13)),2)
+
+reg.ex.summary
+df.coef.ex
+
+print(paste("RSS:", round(reg.ex.summary$rss[13], 2)))
+print(paste("BIC:", round(reg.ex.summary$bic[13], 2)))
+print(paste("Adjusted R Squared:", round(reg.ex.summary$adjr2[13], 2)))
+print(paste("CP:", round(reg.ex.summary$cp[12], 2)))
+
+```
+
+
+```{r ScatterMatrix}
+#shinypairs(df.predict.house) # computationally expensive, only comment out when necessary
+
+```
+
+
+
+
+
 
 
 
